@@ -1,0 +1,96 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+
+
+
+    </style>
+
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowNoTitle">true</item>
+        <!--<item name="windowActionBar">false</item>-->
+        <!---->
+        <!--<item name="android:windowTranslucentStatus">false</item>-->
+        <!--<item name="android:windowTranslucentNavigation">false</item>-->
+        <!--<item name="android:windowContentTransitions">false</item>-->
+
+    </style>
+
+    <style name="Login" parent="AppTheme.NoActionBar">
+        <item name="android:windowBackground">@mipmap/splash</item>
+        <item name="android:textColorSecondary">@color/white</item>
+    </style>
+
+
+    <style name="login_edittext">
+        <item name="android:textColor">@color/color_4</item>
+        <item name="android:textColorHint">@color/color_3</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:paddingLeft">10dp</item>
+        <item name="android:paddingRight">10dp</item>
+        <item name="android:background">@drawable/textbox_s_s_white_nr</item>
+        <item name="android:maxLength">40</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
+    <style name="edittext">
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textColorHint">@color/color_3</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:paddingLeft">10dp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:paddingRight">10dp</item>
+        <item name="android:maxLength">20</item>
+    </style>
+
+
+    <style name="switch_style">
+        <item name="colorControlNormal">@android:color/white</item>
+        <item name="colorControlActivated">@color/orange</item>
+        <item name="colorSwitchThumbNormal">@android:color/white</item>
+        <item name="thumbTint">@color/switch_color</item>
+        <item name="trackTint">@color/switch_color</item>
+    </style>
+
+    <style name="textbox_gray" parent="edittext">
+        <item name="android:background">@drawable/textbox_gray</item>
+    </style>
+
+    <style name="textbox" >
+        <item name="android:layout_width">110dp</item>
+        <item name="android:layout_height">@dimen/textbox_height_30</item>
+        <item name="android:background">@drawable/textbox_white</item>
+        <item name="android:drawablePadding">5dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingLeft">5dp</item>
+        <item name="android:textColor">@color/color_1</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:paddingRight">5dp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:layout_marginTop">5dp</item>
+        <item name="android:imeOptions">actionDone</item>
+    </style>
+    <style name="textbox.length" parent="textbox">
+        <item name="android:layout_width">135dp</item>
+    </style>
+
+
+
+
+
+</resources>

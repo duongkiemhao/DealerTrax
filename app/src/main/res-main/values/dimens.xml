@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <dimen name="toolbar_height">85dp</dimen>
+    <dimen name="toolbar_padding_top">29dp</dimen>
+
+    <dimen name="keyboard_simu_height">360dp</dimen>
+    <dimen name="textbox_height_35">35dp</dimen>
+    <dimen name="textbox_height_30">30dp</dimen>
+    <dimen name="textbox_height_25">25dp</dimen>
+
+    <dimen name="textbox_width_110">110dp</dimen>
+    <dimen name="textbox_width_135">135dp</dimen>
+    <dimen name="textbox_width_280">280dp</dimen>
+
+    <dimen name="textbox_font_size_12">12sp</dimen>
+    <dimen name="textbox_font_size_14">14sp</dimen>
+    <dimen name="textbox_font_size_16">16sp</dimen>
+    <dimen name="textbox_font_size_18">18sp</dimen>
+
+    <dimen name="car_box_width">450dp</dimen>
+</resources>

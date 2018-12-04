@@ -1,0 +1,43 @@
+{
+  "project_info": {
+    "project_number": "238420656001",
+    "firebase_url": "https://loancar-267f7.firebaseio.com",
+    "project_id": "loancar-267f7",
+    "storage_bucket": "loancar-267f7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:238420656001:android:4a67dbe4ed8df0fe",
+        "android_client_info": {
+          "package_name": "com.siliconstack.loancar"
+        }
+      },
+
+      "oauth_client": [
+        {
+          "client_id": "238420656001-9eim8ubdbk9gvn7b8fc4b1j9dhf38a0v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCctPjIGn0ABJQQHLWV8OEu3NzMQgPPmoQ"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

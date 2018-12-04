@@ -1,0 +1,17 @@
+<resources>
+    <bool name="isTablet">false</bool>
+    <string name="app_name">Dealer Trax</string>
+    <!--login-->
+    <string name="msg_error_login">User not logged in. PLease try again!</string>
+    <string name="msg_error_unauthorize">Sorry, session was expired</string>
+    <string name="msg_no_network">No network connection</string>
+    <string name="msg_exit">Please press back again to exit</string>
+
+    <drawable name="white">#FFFFFF</drawable>
+    <drawable name="red">#FE8800</drawable>
+    <drawable name="transparent">@android:color/transparent</drawable>
+    <drawable name="appoint_list_divider">@android:color/darker_gray</drawable>
+
+
+
+</resources>
