@@ -58,7 +58,7 @@ class CameraActivity : AppCompatActivity() {
                 options.inSampleSize = 2
                 var bitmap = BitmapFactory.decodeByteArray(data, 0, data!!.size, options)
                 val matrix = Matrix()
-                val rotation = this@CameraActivity.getWindowManager().getDefaultDisplay().getRotation()
+                val rotation = this@CameraActivity.windowManager.defaultDisplay.rotation
                 var degrees = 0f
                 when (rotation) {
                     Surface.ROTATION_0 -> degrees = 90f
@@ -127,6 +127,12 @@ class CameraActivity : AppCompatActivity() {
             }
         });
         animatorSet.start()
+        cameraActivityBinding.capturedImage.postDelayed({
+            cameraActivityBinding.overlayView.myWidth= cameraActivityBinding.capturedImage.width.toFloat()
+            cameraActivityBinding.overlayView.myHeight= cameraActivityBinding.capturedImage.height.toFloat()
+            cameraActivityBinding.overlayView.requestLayout()
+
+        },500)
     }
 
     fun loadInfo(){

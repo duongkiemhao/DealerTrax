@@ -1,22 +1,26 @@
 package com.siliconstack.dealertrax.viewmodel
 
 import android.arch.lifecycle.AndroidViewModel
+import android.arch.lifecycle.LiveData
 import android.arch.persistence.db.SimpleSQLiteQuery
 import com.orhanobut.logger.Logger
 import com.siliconstack.dealertrax.dao.MainDAO
 import com.siliconstack.dealertrax.AppApplication
 import com.siliconstack.dealertrax.config.Config
-import com.siliconstack.dealertrax.model.MainModel
 import com.siliconstack.dealertrax.room.AppDatabase
 import javax.inject.Inject
 import com.siliconstack.dealertrax.dao.FloorDAO
 import com.siliconstack.dealertrax.dao.LocationDAO
 import com.siliconstack.dealertrax.dao.NameDAO
-import com.siliconstack.dealertrax.model.MainDTO
+import com.siliconstack.dealertrax.model.*
+import com.siliconstack.dealertrax.repository.HomeRepository
+import io.reactivex.Observable
 
 
 class MainViewModel @Inject constructor (application: AppApplication): AndroidViewModel(application) {
 
+        @Inject
+        lateinit var  homeRepository: HomeRepository
     var mainDAO: MainDAO = AppDatabase.getDatabase(getApplication()).mainDAO()
     var locationDAO: LocationDAO = AppDatabase.getDatabase(getApplication()).locationDAO()
     var floorDAO: FloorDAO = AppDatabase.getDatabase(getApplication()).floorDAO()
@@ -54,4 +58,30 @@ class MainViewModel @Inject constructor (application: AppApplication): AndroidVi
     }
 
 
+    fun postFloor(floorModel: FloorModel): LiveData<Resource<BaseApiResponse>> {
+        return homeRepository.postFloor(floorModel)
+    }
+
+    fun postLocation(locationModel: LocationModel): LiveData<Resource<BaseApiResponse>> {
+        return homeRepository.postLocation(locationModel)
+    }
+    fun postOperator(operatorModel: OperatorModel): LiveData<Resource<BaseApiResponse>> {
+        return homeRepository.postOperator(operatorModel)
+    }
+    fun postStockCheck(mainModel: MainModel): LiveData<Resource<BaseApiResponse>> {
+        return homeRepository.postStockChecks(mainModel)
+    }
+
+    fun getLocations(): Observable<List<Any>> {
+        return homeRepository.getLocations()
+    }
+    fun getFloors(): Observable<List<Any>> {
+        return homeRepository.getFloors()
+    }
+    fun getOperators(): Observable<List<Any>> {
+        return homeRepository.getOperators()
+    }
+    fun getStockChecks(): Observable<List<Any>> {
+        return homeRepository.getStockChecks()
+    }
 }

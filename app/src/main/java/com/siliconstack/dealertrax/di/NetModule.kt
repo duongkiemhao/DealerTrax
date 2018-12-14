@@ -2,8 +2,8 @@ package com.siliconstack.dealertrax.di
 
 import com.google.gson.Gson
 import com.siliconstack.dealertrax.AppApplication
-
-import com.siliconstack.dealertrax.api.AppApi
+import com.siliconstack.dealertrax.BuildConfig
+import com.siliconstack.dealertrax.api.TeleserviceApi
 import com.siliconstack.dealertrax.config.Config
 import dagger.Module
 import dagger.Provides
@@ -44,13 +44,13 @@ class NetModule() {
 
 
     @Provides
-    fun provideLoginApi(gson: Gson, okHttpClient: OkHttpClient): AppApi {
+    fun provideLoginApi(gson: Gson, okHttpClient: OkHttpClient): TeleserviceApi {
         return Retrofit.Builder()
-                .baseUrl(Config.BASE_URL)
+                .baseUrl(BuildConfig.SERVER_TELESERVICE_URL)
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .client(okHttpClient)
-                .build().create(AppApi::class.java)
+                .build().create(TeleserviceApi::class.java)
     }
 
 

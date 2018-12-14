@@ -2,17 +2,20 @@ package com.siliconstack.dealertrax.model
 
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.PrimaryKey
+import com.google.gson.annotations.SerializedName
 
 @Entity()
-data class FloorModel (
+data class FloorModel(
 
-        var name:String,
+        @SerializedName("Name")
+        var name: String,
         @PrimaryKey(autoGenerate = true)
-        var id:Int
+        @SerializedName("Id")
+        var id: Int
 
 
-){
-        override fun toString(): String {
-                return name
-        }
+) {
+    override fun toString(): String {
+        return name
+    }
 }

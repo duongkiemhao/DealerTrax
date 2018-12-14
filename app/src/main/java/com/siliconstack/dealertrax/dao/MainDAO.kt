@@ -14,6 +14,11 @@ interface MainDAO {
     @RawQuery
     fun query(query:SupportSQLiteQuery): List<MainDTO>
 
+
+    @Query("delete from MainModel")
+    fun deleteAll()
+
+
     @Insert(onConflict = REPLACE)
     fun addRow(mainModel: MainModel)
 

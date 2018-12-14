@@ -9,7 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.databinding.DataBindingUtil
-import android.databinding.adapters.ViewGroupBindingAdapter.setListener
 import android.location.LocationManager
 import android.location.OnNmeaMessageListener
 import android.os.Bundle
@@ -34,18 +33,14 @@ import com.siliconstack.dealertrax.model.FilterDialogModel
 import com.siliconstack.dealertrax.model.MainDTO
 import com.siliconstack.dealertrax.view.adapter.FilterListAdapter
 import com.siliconstack.dealertrax.view.helper.DialogHelper
-import com.siliconstack.dealertrax.view.ui.scan.ScanResultActivity
 import com.siliconstack.dealertrax.viewmodel.MainViewModel
 import com.tbruyelle.rxpermissions2.RxPermissions
 import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.startActivity
-import org.jetbrains.anko.support.v4.startActivity
 import org.jetbrains.anko.uiThread
-import java.lang.Exception
 import javax.inject.Inject
 
 
-class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener ,FragmentListener{
+class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener, FragmentListener {
 
 
     @Inject
@@ -58,10 +53,10 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener ,Fragmen
     lateinit var googleMap: GoogleMap
     val REQUEST_CHECK_SETTINGS = 0x1
     val REQUEST_MY_LOCATION = 0x2
-    var lat:Double = 0.0
-    var lng:Double=0.0
-    var listMapType = arrayListOf(FilterDialogModel("Satellite", "0", Config.MAP_DEFAULT_TYPE ==GoogleMap.MAP_TYPE_SATELLITE),
-            FilterDialogModel("Terrain", "1", Config.MAP_DEFAULT_TYPE ==GoogleMap.MAP_TYPE_TERRAIN))
+    var lat: Double = 0.0
+    var lng: Double = 0.0
+    var listMapType = arrayListOf(FilterDialogModel("Satellite", "0", Config.MAP_DEFAULT_TYPE == GoogleMap.MAP_TYPE_SATELLITE),
+            FilterDialogModel("Terrain", "1", Config.MAP_DEFAULT_TYPE == GoogleMap.MAP_TYPE_TERRAIN))
     val fusedLocationProviderClient by lazy {
         LocationServices.getFusedLocationProviderClient(context!!);
     }
@@ -149,31 +144,30 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener ,Fragmen
     }
 
 
-
     @SuppressLint("MissingPermission")
     fun focusAllMarkers() {
-        val builder = LatLngBounds.Builder()
-        googleMap.clear()
-          mainViewModel.items.forEach {
-              if(it.lat==null || it.lat==0.0)
-                  return@forEach
-              val latLng=LatLng(it.lat?:0.0,it.lng?:0.0)
-              val markerOption=MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_map_marker))
+        if (mainViewModel.items.count() == 0) {
+            (childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).view?.findViewById<View>(0x2)?.performClick()
+        } else {
+            val builder = LatLngBounds.Builder()
+            googleMap.clear()
+            mainViewModel.items.forEach {
+                if (it.latitude == null || it.latitude == 0.0)
+                    return@forEach
+                val latLng = LatLng(it.latitude ?: 0.0, it.longitude ?: 0.0)
+                val markerOption = MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_map_marker))
+                var marker = googleMap.addMarker(markerOption)
+                marker.tag = it
+                builder.include(latLng)
+            }
 
-              var marker=googleMap.addMarker(markerOption)
-              marker.tag=it
-              builder.include(latLng)
-          }
-        if(mainViewModel.items.isNotEmpty()) {
             val bounds = builder.build()
             val cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 100)
             googleMap.animateCamera(cameraUpdate)
-        }
+
             val customInfoWindow = CustomInfoWindowGoogleMap(context!!)
-
-        googleMap.setInfoWindowAdapter(customInfoWindow)
-
-
+            googleMap.setInfoWindowAdapter(customInfoWindow)
+        }
     }
 
     private fun setListener() {
@@ -213,8 +207,8 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener ,Fragmen
                     val update = CameraUpdateFactory.newLatLngZoom(LatLng(it.latitude, it.longitude),
                             Config.MAP_ZOOM);
                     googleMap.animateCamera(update)
-                    lat=it.latitude
-                    lng=it.longitude
+                    lat = it.latitude
+                    lng = it.longitude
                 }
             }
         }
@@ -222,53 +216,52 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener ,Fragmen
     }
 
 
-    fun processItemNMEA(value:String,isLastOne:Boolean){
-        if(isLastOne){
-            if(value.isNotBlank() && !value.startsWith("*",true))
+    fun processItemNMEA(value: String, isLastOne: Boolean) {
+        if (isLastOne) {
+            if (value.isNotBlank() && !value.startsWith("*", true))
                 array.add(value.substring(0, value.indexOf("*")).toInt())
-        }
-        else if(value.isNotBlank())
+        } else if (value.isNotBlank())
             array.add(value.toInt())
 
 
     }
-    var nmeaListener=object: OnNmeaMessageListener {
+
+    var nmeaListener = object : OnNmeaMessageListener {
         override fun onNmeaMessage(content: String?, p1: Long) {
             doAsync {
-                if(content!!.toUpperCase().contains("GPGSV")) {
+                if (content!!.toUpperCase().contains("GPGSV")) {
                     Logger.d(content)
                     val arr: List<String> = content.split(",")
                     when {
                         arr.size == 8 -> {
-                            processItemNMEA(arr[7],true)
+                            processItemNMEA(arr[7], true)
                         } // Display the string.
                         arr.size == 12 -> {
-                            processItemNMEA(arr[7],false)
-                            processItemNMEA(arr[11],true)
+                            processItemNMEA(arr[7], false)
+                            processItemNMEA(arr[11], true)
                         }
                         arr.size == 16 -> {
-                            processItemNMEA(arr[7],false)
-                            processItemNMEA(arr[11],false)
-                            processItemNMEA(arr[15],true)
+                            processItemNMEA(arr[7], false)
+                            processItemNMEA(arr[11], false)
+                            processItemNMEA(arr[15], true)
                         } // Display the string.
                         arr.size == 20 -> {
-                            processItemNMEA(arr[7],false)
-                            processItemNMEA(arr[11],false)
-                            processItemNMEA(arr[15],false)
-                            processItemNMEA(arr[19],true)
+                            processItemNMEA(arr[7], false)
+                            processItemNMEA(arr[11], false)
+                            processItemNMEA(arr[15], false)
+                            processItemNMEA(arr[19], true)
                         } // Display the string.
                     }
                 }
                 uiThread {
-                    if(array.count()>=1){
+                    if (array.count() >= 1) {
                         try {
                             var max = array.stream().mapToInt { it: Int? ->
                                 it!!
                             }.max().asInt
                             mapviewFragmentBinding.txtGpsSignal.progress = max
                             array.clear()
-                        }
-                        catch (exp: Exception){
+                        } catch (exp: Exception) {
                             mapviewFragmentBinding.txtGpsSignal.progress = 0
                         }
                     }
@@ -282,8 +275,7 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener ,Fragmen
     }
 
     @SuppressLint("MissingPermission")
-    fun settingsRequest(request:Int)
-    {
+    fun settingsRequest(request: Int) {
 
         googleApiClient.connect()
         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
@@ -296,9 +288,8 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener ,Fragmen
         result.setResultCallback { result: LocationSettingsResult ->
             val status = result.getStatus()
             val state = result.locationSettingsStates
-            when(status.statusCode) {
-                LocationSettingsStatusCodes.SUCCESS ->
-                {
+            when (status.statusCode) {
+                LocationSettingsStatusCodes.SUCCESS -> {
                     requestPermissionNMEAListener()
 
                 }
@@ -309,8 +300,7 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener ,Fragmen
 
                     }
                 }
-                LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE ->
-                {
+                LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE -> {
 
                 }
             }
@@ -318,7 +308,7 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener ,Fragmen
     }
 
     @SuppressLint("MissingPermission", "CheckResult")
-    fun requestPermissionNMEAListener(){
+    fun requestPermissionNMEAListener() {
         rxPermissions
                 .request(Manifest.permission.ACCESS_FINE_LOCATION)
                 .subscribe { it: Boolean? ->
@@ -332,29 +322,29 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener ,Fragmen
     @SuppressLint("MissingPermission")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        when(requestCode){
-            REQUEST_CHECK_SETTINGS ->{
-                when(resultCode){
-                    Activity.RESULT_OK ->{
+        when (requestCode) {
+            REQUEST_CHECK_SETTINGS -> {
+                when (resultCode) {
+                    Activity.RESULT_OK -> {
                         requestPermissionNMEAListener()
                     }
-                    Activity.RESULT_CANCELED->{
+                    Activity.RESULT_CANCELED -> {
 
                     }
                 }
             }
-            REQUEST_MY_LOCATION->{
-                when(resultCode){
-                    Activity.RESULT_OK ->{
+            REQUEST_MY_LOCATION -> {
+                when (resultCode) {
+                    Activity.RESULT_OK -> {
                         rxPermissions
-                                .request( Manifest.permission.ACCESS_FINE_LOCATION)
+                                .request(Manifest.permission.ACCESS_FINE_LOCATION)
                                 .subscribe { it: Boolean? ->
                                     if (it!!) {
                                         getDeviceLocation()
                                     }
                                 }
                     }
-                    Activity.RESULT_CANCELED->{
+                    Activity.RESULT_CANCELED -> {
 
                     }
                 }
@@ -364,8 +354,8 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener ,Fragmen
     }
 
     override fun onTextChanged(text: String) {
-        mainViewModel.keyword=text
-        mainViewModel.items= mainViewModel.filterListSearch(false,0,"a.timestamp") as java.util.ArrayList<MainDTO>
+        mainViewModel.keyword = text
+        mainViewModel.items = mainViewModel.filterListSearch(false, 0, "a.timestamp") as java.util.ArrayList<MainDTO>
         focusAllMarkers()
 
     }

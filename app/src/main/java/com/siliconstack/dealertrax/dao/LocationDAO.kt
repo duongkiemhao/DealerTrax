@@ -12,6 +12,11 @@ interface LocationDAO {
     @Query("select * from LocationModel")
     fun getAll(): List<LocationModel>
 
+
+    @Query("delete from LocationModel")
+    fun deleteAll()
+
+
     @Insert(onConflict = REPLACE)
     fun addRow(locationModel: LocationModel)
 

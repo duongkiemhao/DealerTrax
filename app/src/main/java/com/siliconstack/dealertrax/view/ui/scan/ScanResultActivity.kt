@@ -22,6 +22,7 @@ import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapFragment
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.android.gms.maps.model.LatLng
@@ -43,6 +44,7 @@ import com.siliconstack.dealertrax.view.eventbus.MainEventBus
 import com.siliconstack.dealertrax.view.eventbus.SearchEventBus
 import com.siliconstack.dealertrax.view.helper.DialogHelper
 import com.siliconstack.dealertrax.view.ui.base.BaseActivity
+import com.siliconstack.dealertrax.view.ui.search.MapViewFragment
 import com.siliconstack.dealertrax.view.utility.DateUtility
 import com.siliconstack.dealertrax.view.utility.Utility
 import com.siliconstack.dealertrax.viewmodel.MainViewModel
@@ -117,7 +119,7 @@ class ScanResultActivity : BaseActivity(){
 
     //scan
     enum class SCAN_ENUM{
-        VIN, REGO,BARCODE,QRCODE
+        NONE,VIN, REGO,BARCODE,QRCODE,FOCUS
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -329,22 +331,46 @@ class ScanResultActivity : BaseActivity(){
         val floorId =  floorModel?.code?.toIntOrNull()?:0
         val nameId =  nameModel?.code?.toIntOrNull()?:0
         val date = Date()
-        val mainModel = MainModel(0, scanResultFragmentBinding.ediScanResult.text.toString(), date.time, getType(),
+        val mainModel = MainModel(0, scanResultFragmentBinding.ediScanResult.text.toString(), date.time,
                 if (locationId == 0) null else locationId, if (floorId == 0) null else floorId
-                , if (nameId == 0) null else nameId, scanResultFragmentBinding.ediBayNumber.text.toString(),googleMap.cameraPosition.target.latitude,
-                googleMap.cameraPosition.target.longitude,null)
-        mainModel.dateString = DateUtility.parseDateToDateTimeStr(Config.DATE_TIME_PATTERN, date)
+                , if (nameId == 0) null else nameId, scanResultFragmentBinding.ediBayNumber.text.toString(),getType(), googleMap.cameraPosition.target.longitude,
+                googleMap.cameraPosition.target.latitude)
         //get screenshot
         googleMap.addMarker(MarkerOptions().position(com.google.android.gms.maps.model.LatLng(googleMap.cameraPosition.target.latitude,
                 googleMap.cameraPosition.target.longitude)).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_map_marker)))
         scanResultFragmentBinding.btnMarker.visibility=View.GONE
-        googleMap.snapshot {
-            mainModel.image=Utility.convertBitmapToBase64(Utility.scaleBitmapDown(it,860))
-            mainViewModel.addMainModel(mainModel)
-            EventBus.getDefault().post(SearchEventBus(true))
-            onBackPressed()
-        }
+        insertAPI(mainModel)
+//        googleMap.snapshot {
+//            mainModel.image=Utility.convertBitmapToBase64(Utility.scaleBitmapDown(it,860))
 
+//        }
+
+    }
+
+
+    fun insertAPI(mainModel: MainModel){
+        progressDialog.show()
+        mainViewModel.postStockCheck(mainModel).observe(this, android.arch.lifecycle.Observer { it: Resource<BaseApiResponse>? ->
+            it?.let { resource: Resource<BaseApiResponse> ->
+                when (resource.status) {
+                    Resource.Status.SUCCESS -> {
+                        val list: List<MainModel>? = resource.data as List<MainModel>
+                        list?.forEach{ mainModel ->
+
+                            mainViewModel.addMainModel(mainModel)
+                            EventBus.getDefault().post(SearchEventBus(true))
+                            onBackPressed()
+                        }
+                    }
+                    Resource.Status.ERROR -> {
+                        Toasty.error(this@ScanResultActivity,resource.exception?.exceptin?.message.toString()).show()
+                    }
+                    else -> {
+                    }
+                }
+            }
+            progressDialog.dismiss()
+        })
     }
 
     fun getType():Int{
@@ -372,7 +398,7 @@ class ScanResultActivity : BaseActivity(){
 
         }
     }
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission", "ResourceType")
     fun initInfo() {
         scanResultFragmentBinding.txtTitle.text=getToolbarTitle()
 
@@ -401,6 +427,8 @@ class ScanResultActivity : BaseActivity(){
                                     settingsRequest(REQUEST_MY_LOCATION)
                                     false
                                 }
+                                (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).
+                                        view?.findViewById<View>(0x2)?.performClick()
 
                             }
                         }

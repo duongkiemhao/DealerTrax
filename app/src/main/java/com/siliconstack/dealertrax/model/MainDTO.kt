@@ -38,8 +38,8 @@ open class MainDTO() : Comparator<MainDTO>, Parcelable {
         var compareTime:String=""
         var compareTimeFullStr:String=""
         var image:String?=null
-        var lat:Double?=null
-        var lng:Double?=null
+        var longitude:Double?=null
+        var latitude:Double?=null
 
     constructor(parcel: Parcel) : this() {
         isDesc = parcel.readByte() != 0.toByte()
@@ -59,8 +59,8 @@ open class MainDTO() : Comparator<MainDTO>, Parcelable {
         compareTime = parcel.readString()
         compareTimeFullStr = parcel.readString()
         image = parcel.readString()
-        lat = parcel.readValue(Double::class.java.classLoader) as? Double
-        lng = parcel.readValue(Double::class.java.classLoader) as? Double
+        longitude = parcel.readValue(Double::class.java.classLoader) as? Double
+        latitude = parcel.readValue(Double::class.java.classLoader) as? Double
     }
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -81,8 +81,8 @@ open class MainDTO() : Comparator<MainDTO>, Parcelable {
         parcel.writeString(compareTime)
         parcel.writeString(compareTimeFullStr)
         parcel.writeString(image)
-        parcel.writeValue(lat)
-        parcel.writeValue(lng)
+        parcel.writeValue(longitude)
+        parcel.writeValue(latitude)
     }
 
     override fun describeContents(): Int {

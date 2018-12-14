@@ -21,13 +21,15 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.gson.stream.JsonReader
 import com.siliconstack.dealertrax.AppApplication
 import com.siliconstack.dealertrax.R
 import com.siliconstack.dealertrax.config.Config
 import com.siliconstack.dealertrax.config.Config.Companion.MAP_DEFAULT_TYPE
 import com.siliconstack.dealertrax.databinding.MainActivityBinding
-import com.siliconstack.dealertrax.model.FilterDialogModel
+import com.siliconstack.dealertrax.model.*
 import com.siliconstack.dealertrax.view.adapter.FilterListAdapter
+import com.siliconstack.dealertrax.view.control.GsonGenericClass
 import com.siliconstack.dealertrax.view.helper.DialogHelper
 import com.siliconstack.dealertrax.view.ui.base.BaseActivity
 import com.siliconstack.dealertrax.view.ui.scan.ScanResultActivity
@@ -38,9 +40,13 @@ import com.siliconstack.dealertrax.viewmodel.MainViewModel
 import com.tbruyelle.rxpermissions2.RxPermissions
 import dagger.android.AndroidInjection
 import es.dmoral.toasty.Toasty
+import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.startActivity
 import org.jetbrains.anko.uiThread
+import java.io.StringReader
 import java.lang.Exception
 
 
@@ -198,6 +204,10 @@ class MainActivity : BaseActivity() {
             }
             R.id.btn_setting -> {
                 startActivity<SettingActivity>()
+                return true
+            }
+            R.id.btn_sync -> {
+
                 return true
             }
         }
@@ -393,6 +403,9 @@ class MainActivity : BaseActivity() {
             }
         }
     }
+
+
+
 
 
 }

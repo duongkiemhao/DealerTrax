@@ -31,11 +31,8 @@ android {
             debuggable true
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            buildConfigField "String", "CONCIERGE_ROOT_URL", '"erapowerapiqa/"'
-            buildConfigField "String", "LOANCAR_ROOT_URL", '"loancar/loancar/"'
-            buildConfigField "String", "LOGIN_URL", '"https://apiqa.pentanasolutions.com/Demo/AuthServiceAPI/GetToken"'
-            buildConfigField "String", "UPLOAD_IMAGE_URL", '"https://apiqa.pentanasolutions.com/"'
-            buildConfigField "String", "APP_ID", '"00112233"'
+            buildConfigField "String", "SERVER_OCR_URL", '"https://ocr.siliconstack.com.au/"'
+            buildConfigField "String", "SERVER_TELESERVICE_URL", '"http://13.210.63.37:8090/Teleservice/api/"'
 
         }
 
@@ -197,6 +194,8 @@ dependencies {
     implementation "com.google.android.gms:play-services-location:16.0.0"
     compile 'com.daimajia.numberprogressbar:library:1.4@aar'
     api 'com.theartofdev.edmodo:android-image-cropper:2.7.+'
+
+    compile 'com.github.clans:fab:1.6.4'
 
 
 }

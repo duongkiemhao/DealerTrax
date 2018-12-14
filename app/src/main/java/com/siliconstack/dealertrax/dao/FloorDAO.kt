@@ -12,6 +12,10 @@ interface FloorDAO {
     @Query("select * from FloorModel")
     fun getAll(): List<FloorModel>
 
+
+    @Query("delete from FloorModel")
+    fun deleteAll()
+
     @Insert(onConflict = REPLACE)
     fun addRow(floorModel: FloorModel)
 

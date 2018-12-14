@@ -12,7 +12,7 @@
         android:id="@+id/content_frame"
         android:layout_width="match_parent"
         android:layout_height="match_parent" >
-        <include layout="@layout/search_activity"/>
+        <include layout="@layout/home_activity"/>
     </FrameLayout>
 
     <!-- Container for contents of drawer - use NavigationView to make configuration easier -->

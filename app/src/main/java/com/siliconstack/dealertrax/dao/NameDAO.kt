@@ -12,6 +12,10 @@ interface NameDAO {
     @Query("select * from OperatorModel")
     fun getAll(): List<OperatorModel>
 
+    @Query("delete from OperatorModel")
+    fun deleteAll()
+
+
     @Insert(onConflict = REPLACE)
     fun addRow(operatorModel: OperatorModel)
 

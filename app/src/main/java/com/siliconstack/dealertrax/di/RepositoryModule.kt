@@ -1,5 +1,6 @@
 package com.siliconstack.dealertrax.di
 
+import com.siliconstack.dealertrax.api.TeleserviceApi
 import com.siliconstack.dealertrax.repository.HomeRepository
 import dagger.Module
 import dagger.Provides
@@ -14,8 +15,8 @@ class RepositoryModule{
 
     @Provides
     @Singleton
-    fun provideAppRepository(okHttpClient: OkHttpClient): HomeRepository {
-        return HomeRepository(okHttpClient)
+    fun provideAppRepository(teleserviceApi: TeleserviceApi): HomeRepository {
+        return HomeRepository(teleserviceApi)
     }
 
 
