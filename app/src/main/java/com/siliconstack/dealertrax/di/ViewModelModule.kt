@@ -20,6 +20,7 @@ package com.siliconstack.dealertrax.di
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProvider
 import com.siliconstack.dealertrax.viewmodel.MainViewModel
+import com.siliconstack.dealertrax.viewmodel.ScanViewModel
 import com.siliconstack.dealertrax.viewmodel.ViewModelFactory
 import dagger.Binds
 import dagger.Module
@@ -29,14 +30,15 @@ import dagger.multibindings.IntoMap
 @Module
 abstract class ViewModelModule {
 
-
-
-
     @Binds
     @IntoMap
     @ViewModelKey(MainViewModel::class)
     abstract fun bindLoginViewModel(loginViewModel: MainViewModel): ViewModel
 
+    @Binds
+    @IntoMap
+    @ViewModelKey(ScanViewModel::class)
+    abstract fun bindScanViewModel(scanViewModel: ScanViewModel): ViewModel
 
     @Binds
     abstract fun bindViewModelFactory(factory: ViewModelFactory): ViewModelProvider.Factory

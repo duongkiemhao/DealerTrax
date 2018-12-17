@@ -74,7 +74,7 @@ class CameraActivity : AppCompatActivity() {
                 val t = cameraActivityBinding.capturedImage.y.toInt() * bh / height
                 val w = cameraActivityBinding.capturedImage.width * bw / width
                 val h = cameraActivityBinding.capturedImage.height * bh / height
-                var resizedBitmap = Bitmap.createBitmap(bitmap, l, t, w, h)
+                var resizedBitmap = Bitmap.createBitmap(bitmap, l, t, if(l+w>bw) bw else l+w , h)
                 resizedBitmap = Utility.scaleBitmapDown(resizedBitmap,840)
                 if (resizedBitmap != null) {
                     val mainEventBus= MainEventBus()

@@ -4,9 +4,12 @@ package com.siliconstack.dealertrax.repository
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import com.siliconstack.dealertrax.AppApplication
+import com.siliconstack.dealertrax.api.OCRApi
 import com.siliconstack.dealertrax.api.TeleserviceApi
 import com.siliconstack.dealertrax.config.Config
 import com.siliconstack.dealertrax.model.*
+import com.siliconstack.stockcheck.model.OCRModel
+import com.siliconstack.stockcheck.model.OCRRequest
 import io.reactivex.Observable
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -14,9 +17,7 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 
 
-class HomeRepository (val teleserviceApi: TeleserviceApi) : BaseRepository() {
-
-
+class HomeRepository (val teleserviceApi: TeleserviceApi,val OCRApi: OCRApi) : BaseRepository() {
 
     fun getLocations(): Observable<List<Any>> {
         return teleserviceApi.getLocations(Config.AUTHEN_KEY)
@@ -56,5 +57,17 @@ class HomeRepository (val teleserviceApi: TeleserviceApi) : BaseRepository() {
         return data as MutableLiveData<Resource<BaseApiResponse>>
     }
 
+
+    fun getVin(ocrRequest: OCRRequest): LiveData<Resource<BaseApiResponse>> {
+        var data = MutableLiveData<Resource<OCRModel>>()
+        OCRApi.getVin(ocrRequest).enqueue(object : BaseRepository.Companion.MyRetrofitCallback<OCRModel>(data) {})
+        return data as MutableLiveData<Resource<BaseApiResponse>>
+    }
+
+    fun getRego(ocrRequest: OCRRequest): LiveData<Resource<BaseApiResponse>> {
+        var data = MutableLiveData<Resource<OCRModel>>()
+        OCRApi.getRego(ocrRequest).enqueue(object : BaseRepository.Companion.MyRetrofitCallback<OCRModel>(data) {})
+        return data as MutableLiveData<Resource<BaseApiResponse>>
+    }
 
 }

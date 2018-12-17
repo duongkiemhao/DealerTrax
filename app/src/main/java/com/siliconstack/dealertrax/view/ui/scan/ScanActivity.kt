@@ -22,7 +22,6 @@ import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.MapFragment
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.android.gms.maps.model.LatLng
@@ -35,19 +34,20 @@ import com.siliconstack.dealertrax.AppApplication
 import com.siliconstack.dealertrax.PreferenceSetting
 import com.siliconstack.dealertrax.R
 import com.siliconstack.dealertrax.config.Config
-import com.siliconstack.dealertrax.config.Config.Companion.MAP_ZOOM
 import com.siliconstack.dealertrax.config.Constant
-import com.siliconstack.dealertrax.databinding.ScanResultFragmentBinding
+import com.siliconstack.dealertrax.databinding.ScanActivityBinding
 import com.siliconstack.dealertrax.model.*
 import com.siliconstack.dealertrax.view.adapter.FilterListAdapter
 import com.siliconstack.dealertrax.view.eventbus.MainEventBus
 import com.siliconstack.dealertrax.view.eventbus.SearchEventBus
 import com.siliconstack.dealertrax.view.helper.DialogHelper
 import com.siliconstack.dealertrax.view.ui.base.BaseActivity
-import com.siliconstack.dealertrax.view.ui.search.MapViewFragment
 import com.siliconstack.dealertrax.view.utility.DateUtility
 import com.siliconstack.dealertrax.view.utility.Utility
 import com.siliconstack.dealertrax.viewmodel.MainViewModel
+import com.siliconstack.dealertrax.viewmodel.ScanViewModel
+import com.siliconstack.stockcheck.model.OCRModel
+import com.siliconstack.stockcheck.model.OCRRequest
 import com.tbruyelle.rxpermissions2.RxPermissions
 import com.theartofdev.edmodo.cropper.CropImage
 import dagger.android.AndroidInjection
@@ -63,11 +63,10 @@ import java.util.regex.Pattern
 import kotlin.collections.ArrayList
 
 
-class ScanResultActivity : BaseActivity(){
+class ScanActivity : BaseActivity(){
 
-    lateinit var scanResultFragmentBinding: ScanResultFragmentBinding
-
-    //lateinit var progressDialog: MaterialDialog
+    lateinit var scanActivityBinding: ScanActivityBinding
+    lateinit var scanViewModel: ScanViewModel
     val REQUEST_QRCODE=101
     val REQUEST_BARCODE=100
     val REQUEST_CHOOSE_FROM_GALLERY=102
@@ -88,8 +87,7 @@ class ScanResultActivity : BaseActivity(){
     val REQUEST_MY_LOCATION = 0x2
     var lat:Double = 0.0
     var lng:Double=0.0
-    var listMapType = arrayListOf(FilterDialogModel("Satellite", "0", Config.MAP_DEFAULT_TYPE ==GoogleMap.MAP_TYPE_SATELLITE),
-            FilterDialogModel("Terrain", "1", Config.MAP_DEFAULT_TYPE ==GoogleMap.MAP_TYPE_TERRAIN))
+    
     val fusedLocationProviderClient by lazy {
         LocationServices.getFusedLocationProviderClient(this)
     }
@@ -118,7 +116,7 @@ class ScanResultActivity : BaseActivity(){
 
 
     //scan
-    enum class SCAN_ENUM{
+    enum class SCANENUM{
         NONE,VIN, REGO,BARCODE,QRCODE,FOCUS
     }
 
@@ -138,9 +136,11 @@ class ScanResultActivity : BaseActivity(){
     }
 
     private fun initViewBinding() {
-        scanResultFragmentBinding = DataBindingUtil.setContentView(this, R.layout.scan_result_fragment)
+        scanActivityBinding = DataBindingUtil.setContentView(this, R.layout.scan_activity)
         mainViewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel::class.java)
+        scanViewModel= ViewModelProviders.of(this, viewModelFactory).get(ScanViewModel::class.java)
         AppApplication.appComponent.injectViewModel(mainViewModel)
+        AppApplication.appComponent.injectViewModel(scanViewModel)
     }
 
 
@@ -151,11 +151,11 @@ class ScanResultActivity : BaseActivity(){
                 .subscribe { it: Boolean? ->
                     if (it!!) {
                         when(scanEnum){
-                            SCAN_ENUM.VIN.ordinal ->
+                            SCANENUM.VIN.ordinal ->
                                 startActivity<CameraActivity>()
-                            SCAN_ENUM.REGO.ordinal ->
+                            SCANENUM.REGO.ordinal ->
                                 startActivity<CameraActivity>()
-                            SCAN_ENUM.BARCODE.ordinal -> {
+                            SCANENUM.BARCODE.ordinal -> {
                                 val intent = Intent(this, ZXingScannerActivity::class.java)
                                 startActivityForResult(intent, REQUEST_BARCODE)
                             }
@@ -178,7 +178,7 @@ class ScanResultActivity : BaseActivity(){
                 when(resultCode){
                     Activity.RESULT_OK ->{
                         val result=data!!.getStringExtra("result")
-                        scanResultFragmentBinding.ediScanResult.setText(result)
+                        scanActivityBinding.ediScanResult.setText(result)
                     }
                 }
             }
@@ -186,7 +186,7 @@ class ScanResultActivity : BaseActivity(){
                 when(resultCode){
                     Activity.RESULT_OK ->{
                         val result=data!!.getStringExtra("result")
-                        scanResultFragmentBinding.ediScanResult.setText(result)
+                        scanActivityBinding.ediScanResult.setText(result)
                     }
                 }
             }
@@ -204,8 +204,17 @@ class ScanResultActivity : BaseActivity(){
                     if (resultCode == RESULT_OK) {
                         val resultUri = result.uri
                         val resizedBitmap = Utility.scaleBitmapDown(MediaStore.Images.Media.getBitmap(getContentResolver(), resultUri),840)
-                        scanResultFragmentBinding.imageView.setImageBitmap(resizedBitmap)
-                        loadCloudScan(resizedBitmap)
+                        scanActivityBinding.imageView.setImageBitmap(resizedBitmap)
+                        when(scanEnum){
+                            SCANENUM.VIN.ordinal ->{
+                                scanVinAPI(resizedBitmap)
+                            }
+                            SCANENUM.REGO.ordinal ->{
+                                scanRegoAPI(resizedBitmap)
+                            }
+                            else ->{}
+                        }
+
 
                     } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
 
@@ -242,13 +251,13 @@ class ScanResultActivity : BaseActivity(){
     }
 
     fun setListener() {
-        scanResultFragmentBinding.btnCancel.setOnClickListener {
+        scanActivityBinding.btnCancel.setOnClickListener {
             finish()
         }
-        scanResultFragmentBinding.btnConfirm.setOnClickListener {
-            if(scanResultFragmentBinding.ediScanResult.text.isNullOrBlank())
+        scanActivityBinding.btnConfirm.setOnClickListener {
+            if(scanActivityBinding.ediScanResult.text.isNullOrBlank())
                 return@setOnClickListener
-            val scanItem=mainViewModel.isScanTextExist(scanResultFragmentBinding.ediScanResult.text.toString().trim())
+            val scanItem=mainViewModel.isScanTextExist(scanActivityBinding.ediScanResult.text.toString().trim())
             if(scanItem!=null){
                 val view=LayoutInflater.from(this).inflate(R.layout.view_vehicle_found,null)
                 view.findViewById<TextView>(R.id.txt_value).text=scanItem.scanText
@@ -262,30 +271,30 @@ class ScanResultActivity : BaseActivity(){
                     dialog.dismiss()
                 }, MaterialDialog.SingleButtonCallback { dialog, which ->
                     dialog.dismiss()
-                },this@ScanResultActivity).show()
+                },this@ScanActivity).show()
 
             }
             else {
                 insertToDB()
             }
         }
-        scanResultFragmentBinding.btnCamera.setOnClickListener {
+        scanActivityBinding.btnCamera.setOnClickListener {
             openCameraActivity()
         }
-        scanResultFragmentBinding.btnGallery.setOnClickListener {
+        scanActivityBinding.btnGallery.setOnClickListener {
             val galleryIntent = Intent(Intent.ACTION_PICK,
                             android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
                     startActivityForResult(galleryIntent, REQUEST_CHOOSE_FROM_GALLERY)
         }
 
-        scanResultFragmentBinding.txtLocation.setOnClickListener {
+        scanActivityBinding.txtLocation.setOnClickListener {
             DialogHelper.materialProgressDialog("", this, FilterListAdapter(listLocation),
                     MaterialDialog.SingleButtonCallback { dialog, which ->
                         listLocation= (dialog.recyclerView.adapter as FilterListAdapter).items
                         listLocation.forEach {
                             if (it.isSelect) {
                                 locationModel=it
-                                scanResultFragmentBinding.txtLocation.text=locationModel?.name
+                                scanActivityBinding.txtLocation.text=locationModel?.name
                                 PreferenceSetting.locationSetting=it
                                 return@SingleButtonCallback
                             }
@@ -293,14 +302,14 @@ class ScanResultActivity : BaseActivity(){
                         dialog.dismiss()
                     }).show()
         }
-        scanResultFragmentBinding.txtFloor.setOnClickListener {
+        scanActivityBinding.txtFloor.setOnClickListener {
             DialogHelper.materialProgressDialog("", this, FilterListAdapter(listFloor),
                     MaterialDialog.SingleButtonCallback { dialog, which ->
                         listFloor= (dialog.recyclerView.adapter as FilterListAdapter).items
                         listFloor.forEach {
                             if (it.isSelect) {
                                 floorModel=it
-                                scanResultFragmentBinding.txtFloor.text=floorModel?.name
+                                scanActivityBinding.txtFloor.text=floorModel?.name
                                 PreferenceSetting.floorSetting=it
                                 return@SingleButtonCallback
                             }
@@ -308,14 +317,14 @@ class ScanResultActivity : BaseActivity(){
                         dialog.dismiss()
                     }).show()
         }
-        scanResultFragmentBinding.txtOperator.setOnClickListener {
+        scanActivityBinding.txtOperator.setOnClickListener {
             DialogHelper.materialProgressDialog("", this, FilterListAdapter(listName),
                     MaterialDialog.SingleButtonCallback { dialog, which ->
                         listName= (dialog.recyclerView.adapter as FilterListAdapter).items
                         listName.forEach {
                             if (it.isSelect) {
                                 nameModel=it
-                                scanResultFragmentBinding.txtOperator.text=nameModel?.name
+                                scanActivityBinding.txtOperator.text=nameModel?.name
                                 PreferenceSetting.nameSetting=it
                                 return@SingleButtonCallback
                             }
@@ -331,14 +340,14 @@ class ScanResultActivity : BaseActivity(){
         val floorId =  floorModel?.code?.toIntOrNull()?:0
         val nameId =  nameModel?.code?.toIntOrNull()?:0
         val date = Date()
-        val mainModel = MainModel(0, scanResultFragmentBinding.ediScanResult.text.toString(), date.time,
+        val mainModel = MainModel(0, scanActivityBinding.ediScanResult.text.toString(), date.time,
                 if (locationId == 0) null else locationId, if (floorId == 0) null else floorId
-                , if (nameId == 0) null else nameId, scanResultFragmentBinding.ediBayNumber.text.toString(),getType(), googleMap.cameraPosition.target.longitude,
+                , if (nameId == 0) null else nameId, scanActivityBinding.ediBayNumber.text.toString(),getType(), googleMap.cameraPosition.target.longitude,
                 googleMap.cameraPosition.target.latitude)
         //get screenshot
         googleMap.addMarker(MarkerOptions().position(com.google.android.gms.maps.model.LatLng(googleMap.cameraPosition.target.latitude,
                 googleMap.cameraPosition.target.longitude)).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_map_marker)))
-        scanResultFragmentBinding.btnMarker.visibility=View.GONE
+        scanActivityBinding.btnMarker.visibility=View.GONE
         insertAPI(mainModel)
 //        googleMap.snapshot {
 //            mainModel.image=Utility.convertBitmapToBase64(Utility.scaleBitmapDown(it,860))
@@ -363,7 +372,7 @@ class ScanResultActivity : BaseActivity(){
                         }
                     }
                     Resource.Status.ERROR -> {
-                        Toasty.error(this@ScanResultActivity,resource.exception?.exceptin?.message.toString()).show()
+                        Toasty.error(this@ScanActivity,resource.exception?.exceptin?.message.toString()).show()
                     }
                     else -> {
                     }
@@ -375,11 +384,11 @@ class ScanResultActivity : BaseActivity(){
 
     fun getType():Int{
         when(scanEnum){
-            SCAN_ENUM.VIN.ordinal ->
+            SCANENUM.VIN.ordinal ->
                 return 0
-            SCAN_ENUM.REGO.ordinal ->
+            SCANENUM.REGO.ordinal ->
                 return 1
-            SCAN_ENUM.BARCODE.ordinal ->
+            SCANENUM.BARCODE.ordinal ->
                 return 2
             else -> return 3
 
@@ -388,11 +397,11 @@ class ScanResultActivity : BaseActivity(){
 
     fun getToolbarTitle():String{
         when(scanEnum){
-            SCAN_ENUM.VIN.ordinal ->
+            SCANENUM.VIN.ordinal ->
                 return "SCAN VIN"
-            SCAN_ENUM.REGO.ordinal ->
+            SCANENUM.REGO.ordinal ->
                 return "SCAN REGO"
-            SCAN_ENUM.BARCODE.ordinal ->
+            SCANENUM.BARCODE.ordinal ->
                 return "SCAN BARCODE"
             else -> return "SCAN QRCODE"
 
@@ -400,13 +409,13 @@ class ScanResultActivity : BaseActivity(){
     }
     @SuppressLint("MissingPermission", "ResourceType")
     fun initInfo() {
-        scanResultFragmentBinding.txtTitle.text=getToolbarTitle()
+        scanActivityBinding.txtTitle.text=getToolbarTitle()
 
-        scanResultFragmentBinding.txtLocation.text=PreferenceSetting.locationSetting?.name?:""
+        scanActivityBinding.txtLocation.text=PreferenceSetting.locationSetting?.name?:""
         locationModel=PreferenceSetting.locationSetting
-        scanResultFragmentBinding.txtFloor.text=PreferenceSetting.floorSetting?.name?:""
+        scanActivityBinding.txtFloor.text=PreferenceSetting.floorSetting?.name?:""
         floorModel=PreferenceSetting.floorSetting
-        scanResultFragmentBinding.txtOperator.text=PreferenceSetting.nameSetting?.name?:""
+        scanActivityBinding.txtOperator.text=PreferenceSetting.nameSetting?.name?:""
         nameModel=PreferenceSetting.nameSetting
         //google map
         (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).getMapAsync {
@@ -437,20 +446,20 @@ class ScanResultActivity : BaseActivity(){
         }
 
         Handler().postDelayed({
-            val layoutHeight=scanResultFragmentBinding.layoutImage.height
-            val imageHeight=scanResultFragmentBinding.btnMarker.height
-            (scanResultFragmentBinding.btnMarker.layoutParams as ConstraintLayout.LayoutParams).setMargins(0,(layoutHeight/2)-(imageHeight),0,0)
-            scanResultFragmentBinding.btnMarker.requestLayout()
+            val layoutHeight=scanActivityBinding.layoutImage.height
+            val imageHeight=scanActivityBinding.btnMarker.height
+            (scanActivityBinding.btnMarker.layoutParams as ConstraintLayout.LayoutParams).setMargins(0,(layoutHeight/2)-(imageHeight),0,0)
+            scanActivityBinding.btnMarker.requestLayout()
         },500)
 
-        if(scanEnum==SCAN_ENUM.VIN.ordinal || scanEnum==SCAN_ENUM.REGO.ordinal)
+        if(scanEnum==SCANENUM.VIN.ordinal || scanEnum==SCANENUM.REGO.ordinal)
         {
-            scanResultFragmentBinding.btnGallery.visibility=View.VISIBLE
-            scanResultFragmentBinding.btnCamera.visibility=View.VISIBLE
+            scanActivityBinding.btnGallery.visibility=View.VISIBLE
+            scanActivityBinding.btnCamera.visibility=View.VISIBLE
         }
         else{
-            scanResultFragmentBinding.btnGallery.visibility=View.GONE
-            scanResultFragmentBinding.btnCamera.visibility=View.VISIBLE
+            scanActivityBinding.btnGallery.visibility=View.GONE
+            scanActivityBinding.btnCamera.visibility=View.VISIBLE
         }
 
         this.listLocation.add(FilterDialogModel("None","0","0"==PreferenceSetting.locationSetting?.code?:0))
@@ -467,94 +476,79 @@ class ScanResultActivity : BaseActivity(){
         }
     }
 
-    fun loadInfo() {
-        val PATTERN_VIN ="(?s).*([0-9ABCDEFGHJKLNPRSTUVWXYZ]{17}).*";
-        when(scanEnum){
-            SCAN_ENUM.VIN.ordinal ->{
-                val matcher = Pattern.compile(PATTERN_VIN).matcher(result)
-                if (matcher.matches()) {
-                    scanResultFragmentBinding.ediScanResult.setText(matcher.group(1).replace("[^0-9A-Z]".toRegex(), ""))
-                }
-            }
-            SCAN_ENUM.REGO.ordinal ->{
-                scanResultFragmentBinding.ediScanResult.setText(result?.replace("[^0-9A-Z]".toRegex(), ""))
-            }
-        }
-    }
 
-    fun loadCloudScan(bitmap: Bitmap){
-
-        scanResultFragmentBinding.animationView.visibility=View.VISIBLE
-        val visionBuilder = Vision.Builder(
-                NetHttpTransport(),
-                AndroidJsonFactory(),
-                null)
-
-        visionBuilder.setVisionRequestInitializer(
-                VisionRequestInitializer(Config.CLOUD_VISION_API_KEY))
-        val vision = visionBuilder.build()
-        val desiredFeature = Feature()
-        desiredFeature.setType(Config.CLOUD_VISION_DETECT_TYPE)
-        val request = AnnotateImageRequest()
-        val inputImage = Image()
-        inputImage.setContent(Utility.convertBitmapToBase64(bitmap))
-        request.setImage(inputImage);
-        request.setFeatures(Arrays.asList(desiredFeature));
-
-        val batchRequest = BatchAnnotateImagesRequest()
-        batchRequest.setRequests(Arrays.asList(request))
-        //bitmap.recycle()
-
-        doAsync {
-            var batchResponse: BatchAnnotateImagesResponse
-            try{
-                batchResponse = vision.images().annotate(batchRequest).execute()
-                uiThread {
-                    val imagesResponse=batchResponse.getResponses().get(0)
-
-                    scanResultFragmentBinding.animationView.visibility=View.GONE
-                    if(scanEnum== SCAN_ENUM.VIN.ordinal) {
-                        val content = imagesResponse.getFullTextAnnotation();
-                        if (content != null)
-                        {
-                            result=content.text
-                            loadInfo()
+    fun scanVinAPI(bitmap: Bitmap){
+        var ocrRequest= OCRRequest()
+        ocrRequest.imageData=Utility.convertBitmapToBase64(bitmap)
+        progressDialog.show()
+        scanViewModel.getVin(ocrRequest).observe(this, android.arch.lifecycle.Observer { resource: Resource<BaseApiResponse>? ->
+            if (resource != null) {
+                when (resource.status) {
+                    Resource.Status.SUCCESS -> {
+                        progressDialog.dismiss()
+                        val ocrModel= resource.data as OCRModel
+                        if(ocrModel!=null){
+                            scanActivityBinding.ediScanResult.setText(ocrModel!!.vin)
                         }
-                        else content?.let { it1 -> Toasty.error(this@ScanResultActivity, "Scan error, no text found").show() }
+                        else{
+                            Toasty.info(this@ScanActivity,"Sorry, No text found, please try again").show()
+                        }
+
                     }
-                    else if(scanEnum== SCAN_ENUM.REGO.ordinal){
-                        val list = imagesResponse.textAnnotations;
-                        var result :StringBuffer= StringBuffer()
-                        if(list!=null) {
-                            list.forEachIndexed { index, entityAnnotation ->
-                                if(index>=1){
-                                    if(entityAnnotation.boundingPoly.vertices.count()>=4)
-                                        if(Math.abs(entityAnnotation.boundingPoly.vertices[1].y-entityAnnotation.boundingPoly.vertices[3].y)>=100)
-                                            result.append(entityAnnotation.description)
-                                }
-                            }
-                            this@ScanResultActivity.result=result.toString()
-                            loadInfo()
-                        }
-                        else list?.let { it1 -> Toasty.error(this@ScanResultActivity,"Scan error, no text found").show() }
+                    Resource.Status.ERROR -> {
+                        progressDialog.dismiss()
+                        Toasty.error(this@ScanActivity,resource.exception?.exceptin?.message?:"").show()
+
                     }
                 }
             }
-            catch (exp:Exception) {
-
-                scanResultFragmentBinding.animationView.visibility=View.GONE
-            }
-
-        }
-
+        })
     }
+
+    fun scanRegoAPI(bitmap: Bitmap){
+        var ocrRequest= OCRRequest()
+        ocrRequest.imageData=Utility.convertBitmapToBase64(bitmap)
+        progressDialog.show()
+        scanViewModel.getRego(ocrRequest).observe(this, android.arch.lifecycle.Observer { resource: Resource<BaseApiResponse>? ->
+            if (resource != null) {
+                when (resource.status) {
+                    Resource.Status.SUCCESS -> {
+                        progressDialog.dismiss()
+                        val ocrModel= resource.data as OCRModel
+                        if(ocrModel!=null){
+                            scanActivityBinding.ediScanResult.setText(ocrModel!!.rego)
+                        }
+                        else{
+                            Toasty.info(this@ScanActivity,"Sorry, No text found, please try again").show()
+                        }
+
+                    }
+                    Resource.Status.ERROR -> {
+                        progressDialog.dismiss()
+                        Toasty.error(this@ScanActivity,resource.exception?.exceptin?.message?:"").show()
+
+                    }
+                }
+            }
+        })
+    }
+
+
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(mainEventBus: MainEventBus) {
         mainEventBus.bitmapURL?.let {
             val bitmap=Utility.getBitmapFromURL(it)
-            scanResultFragmentBinding.imageView.setImageBitmap(bitmap)
-            loadCloudScan(bitmap)
+            scanActivityBinding.imageView.setImageBitmap(bitmap)
+            when(scanEnum){
+                SCANENUM.VIN.ordinal ->{
+                    scanVinAPI(bitmap)
+                }
+                SCANENUM.REGO.ordinal ->{
+                    scanRegoAPI(bitmap)
+                }
+                else ->{}
+            }
 
         }
     }
@@ -588,7 +582,7 @@ class ScanResultActivity : BaseActivity(){
                 }
                 LocationSettingsStatusCodes.RESOLUTION_REQUIRED -> {
                     try {
-                        status.startResolutionForResult(this@ScanResultActivity, request)
+                        status.startResolutionForResult(this@ScanActivity, request)
                     } catch (e: IntentSender.SendIntentException) {
 
                     }

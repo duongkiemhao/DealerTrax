@@ -1,6 +1,6 @@
 package com.siliconstack.dealertrax.di
 
-import com.siliconstack.dealertrax.view.ui.scan.ScanResultActivity
+import com.siliconstack.dealertrax.view.ui.scan.ScanActivity
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 
@@ -25,7 +25,7 @@ import dagger.android.ContributesAndroidInjector
 @Module
 abstract class ScanFragmentBuildersModule {
     @ContributesAndroidInjector
-    abstract fun contributeScanResultFragment(): ScanResultActivity
+    abstract fun contributeScanResultFragment(): ScanActivity
 //
 //
 

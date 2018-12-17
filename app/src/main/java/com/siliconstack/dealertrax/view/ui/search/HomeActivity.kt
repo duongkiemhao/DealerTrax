@@ -24,7 +24,7 @@ import com.siliconstack.dealertrax.model.OperatorModel
 import com.siliconstack.dealertrax.view.control.GsonGenericClass
 import com.siliconstack.dealertrax.view.eventbus.SearchEventBus
 import com.siliconstack.dealertrax.view.ui.base.BaseActivity
-import com.siliconstack.dealertrax.view.ui.scan.ScanResultActivity
+import com.siliconstack.dealertrax.view.ui.scan.ScanActivity
 import com.siliconstack.dealertrax.view.ui.setting.SettingActivity
 import com.siliconstack.dealertrax.view.utility.Utility
 import com.siliconstack.dealertrax.viewmodel.MainViewModel
@@ -58,7 +58,7 @@ class SearchActivity : BaseActivity(), HasSupportFragmentInjector, SearchActivit
     }
 
     var openMenuItem = DRAWER_ITEM.NONE.ordinal
-    var vehicleClickEnum=ScanResultActivity.SCAN_ENUM.NONE.ordinal
+    var vehicleClickEnum=ScanActivity.SCANENUM.NONE.ordinal
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,25 +93,25 @@ class SearchActivity : BaseActivity(), HasSupportFragmentInjector, SearchActivit
         searchActivityBinding.ediKeyword.addTextChangedListener(textChangeListener)
 
         searchActivityBinding.btnScanVin.setOnClickListener {
-            vehicleClickEnum=ScanResultActivity.SCAN_ENUM.VIN.ordinal
+            vehicleClickEnum=ScanActivity.SCANENUM.VIN.ordinal
             searchActivityBinding.fab.close(false)
         }
         searchActivityBinding.btnScanRego.setOnClickListener {
-            vehicleClickEnum=ScanResultActivity.SCAN_ENUM.REGO.ordinal
+            vehicleClickEnum=ScanActivity.SCANENUM.REGO.ordinal
             searchActivityBinding.fab.close(false)
 
         }
         searchActivityBinding.btnScanQrcode.setOnClickListener {
-            vehicleClickEnum=ScanResultActivity.SCAN_ENUM.QRCODE.ordinal
+            vehicleClickEnum=ScanActivity.SCANENUM.QRCODE.ordinal
             searchActivityBinding.fab.close(false)
         }
 
         searchActivityBinding.btnScanBarcode.setOnClickListener {
-            vehicleClickEnum=ScanResultActivity.SCAN_ENUM.BARCODE.ordinal
+            vehicleClickEnum=ScanActivity.SCANENUM.BARCODE.ordinal
             searchActivityBinding.fab.close(false)
         }
         searchActivityBinding.btnFocusAll.setOnClickListener {
-            vehicleClickEnum=ScanResultActivity.SCAN_ENUM.FOCUS.ordinal
+            vehicleClickEnum=ScanActivity.SCANENUM.FOCUS.ordinal
 
             if (supportFragmentManager.findFragmentById(R.id.content) is MapViewFragmentListener) {
                 searchActivityBinding.fab.close(false)
@@ -121,15 +121,15 @@ class SearchActivity : BaseActivity(), HasSupportFragmentInjector, SearchActivit
             if(!it){
                 Utility.hideKeyboard(currentFocus,this)
                 when(vehicleClickEnum){
-                    ScanResultActivity.SCAN_ENUM.FOCUS.ordinal ->{
+                    ScanActivity.SCANENUM.FOCUS.ordinal ->{
                         (supportFragmentManager.findFragmentById(R.id.content) as MapViewFragmentListener).focusAllMarker()
                     }
-                    ScanResultActivity.SCAN_ENUM.NONE.ordinal ->{
+                    ScanActivity.SCANENUM.NONE.ordinal ->{
 
                     }
                     else ->{
 
-                        startActivity<ScanResultActivity>("scanEnum" to vehicleClickEnum,
+                        startActivity<ScanActivity>("scanEnum" to vehicleClickEnum,
                                 "mapType" to mapType)
                     }
 

@@ -21,7 +21,6 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.gson.stream.JsonReader
 import com.siliconstack.dealertrax.AppApplication
 import com.siliconstack.dealertrax.R
 import com.siliconstack.dealertrax.config.Config
@@ -29,10 +28,9 @@ import com.siliconstack.dealertrax.config.Config.Companion.MAP_DEFAULT_TYPE
 import com.siliconstack.dealertrax.databinding.MainActivityBinding
 import com.siliconstack.dealertrax.model.*
 import com.siliconstack.dealertrax.view.adapter.FilterListAdapter
-import com.siliconstack.dealertrax.view.control.GsonGenericClass
 import com.siliconstack.dealertrax.view.helper.DialogHelper
 import com.siliconstack.dealertrax.view.ui.base.BaseActivity
-import com.siliconstack.dealertrax.view.ui.scan.ScanResultActivity
+import com.siliconstack.dealertrax.view.ui.scan.ScanActivity
 import com.siliconstack.dealertrax.view.ui.search.SearchActivity
 import com.siliconstack.dealertrax.view.ui.setting.SettingActivity
 import com.siliconstack.dealertrax.view.utility.Utility
@@ -40,13 +38,9 @@ import com.siliconstack.dealertrax.viewmodel.MainViewModel
 import com.tbruyelle.rxpermissions2.RxPermissions
 import dagger.android.AndroidInjection
 import es.dmoral.toasty.Toasty
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.startActivity
 import org.jetbrains.anko.uiThread
-import java.io.StringReader
 import java.lang.Exception
 
 
@@ -144,20 +138,20 @@ class MainActivity : BaseActivity() {
     @SuppressLint("MissingPermission", "CheckResult")
     private fun setListener() {
         mainActivityBinding.btnScanVin.setOnClickListener {
-            startActivity<ScanResultActivity>("scanEnum" to ScanResultActivity.SCAN_ENUM.VIN.ordinal,
+            startActivity<ScanActivity>("scanEnum" to ScanActivity.SCANENUM.VIN.ordinal,
                     "mapType" to googleMap.mapType,"lat" to googleMap.cameraPosition.target.latitude,"lng" to googleMap.cameraPosition.target.longitude)
         }
         mainActivityBinding.btnScanRego.setOnClickListener {
-            startActivity<ScanResultActivity>("scanEnum" to ScanResultActivity.SCAN_ENUM.REGO.ordinal,
+            startActivity<ScanActivity>("scanEnum" to ScanActivity.SCANENUM.REGO.ordinal,
                     "mapType" to googleMap.mapType,"lat" to googleMap.cameraPosition.target.latitude,"lng" to googleMap.cameraPosition.target.longitude)
         }
         mainActivityBinding.btnScanQrcode.setOnClickListener {
-            startActivity<ScanResultActivity>("scanEnum" to ScanResultActivity.SCAN_ENUM.QRCODE.ordinal,
+            startActivity<ScanActivity>("scanEnum" to ScanActivity.SCANENUM.QRCODE.ordinal,
                     "mapType" to googleMap.mapType,"lat" to googleMap.cameraPosition.target.latitude,"lng" to googleMap.cameraPosition.target.longitude)
         }
 
         mainActivityBinding.btnScanBarcode.setOnClickListener {
-            startActivity<ScanResultActivity>("scanEnum" to ScanResultActivity.SCAN_ENUM.BARCODE.ordinal,
+            startActivity<ScanActivity>("scanEnum" to ScanActivity.SCANENUM.BARCODE.ordinal,
                     "mapType" to googleMap.mapType,"lat" to googleMap.cameraPosition.target.latitude,"lng" to googleMap.cameraPosition.target.longitude)
         }
 
@@ -395,7 +389,7 @@ class MainActivity : BaseActivity() {
                 }
             }
             REQUEST_TAKE_PICTURE ->{
-                startActivity<ScanResultActivity>("scanEnum" to ScanResultActivity.SCAN_ENUM.VIN.ordinal,
+                startActivity<ScanActivity>("scanEnum" to ScanActivity.SCANENUM.VIN.ordinal,
                         "mapType" to googleMap.mapType,"lat" to googleMap.cameraPosition.target.latitude,"lng" to googleMap.cameraPosition.target.longitude)
             }
             REQUEST_OPEN_GALLERY ->{
