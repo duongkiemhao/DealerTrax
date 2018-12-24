@@ -131,6 +131,7 @@ class SearchActivity : BaseActivity(), HasSupportFragmentInjector, SearchActivit
 
                         startActivity<ScanActivity>("scanEnum" to vehicleClickEnum,
                                 "mapType" to mapType)
+                        vehicleClickEnum=ScanActivity.SCANENUM.NONE.ordinal
                     }
 
                 }

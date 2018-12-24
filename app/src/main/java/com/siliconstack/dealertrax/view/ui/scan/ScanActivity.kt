@@ -73,12 +73,12 @@ class ScanActivity : BaseActivity(){
     var result:String?=null
     var scanEnum:Int = 0
     //spinner
-     var listLocation:ArrayList<FilterDialogModel> = arrayListOf()
-    var listFloor:ArrayList<FilterDialogModel> = arrayListOf()
-    var listName:ArrayList<FilterDialogModel> = arrayListOf()
-     var locationModel:FilterDialogModel?=null
-    var floorModel:FilterDialogModel?=null
-    var nameModel:FilterDialogModel?=null
+    private var listLocation:ArrayList<FilterDialogModel> = arrayListOf()
+    private var listFloor:ArrayList<FilterDialogModel> = arrayListOf()
+    private var listName:ArrayList<FilterDialogModel> = arrayListOf()
+     private var locationModel:FilterDialogModel?=null
+    private var floorModel:FilterDialogModel?=null
+    private var nameModel:FilterDialogModel?=null
 
 
     //google map
@@ -88,24 +88,22 @@ class ScanActivity : BaseActivity(){
     var lat:Double = 0.0
     var lng:Double=0.0
     
-    val fusedLocationProviderClient by lazy {
+    private val fusedLocationProviderClient by lazy {
         LocationServices.getFusedLocationProviderClient(this)
     }
-    val rxPermissions by lazy {
+    private val rxPermissions by lazy {
         RxPermissions(this)
     }
-    val locationManager by lazy {
-        this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-    }
+
     val array by lazy {
         ArrayList<Int>()
     }
-    val googleApiClient by lazy {
+    private val googleApiClient by lazy {
         GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
                 .build()
     }
-    val locationRequest by lazy {
+    private val locationRequest by lazy {
         LocationRequest.create();
 
     }
@@ -147,7 +145,7 @@ class ScanActivity : BaseActivity(){
     @SuppressLint("CheckResult")
     fun openCameraActivity(){
         rxPermissions
-                .request(Manifest.permission.CAMERA)
+                .request(Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 .subscribe { it: Boolean? ->
                     if (it!!) {
                         when(scanEnum){
@@ -195,12 +193,12 @@ class ScanActivity : BaseActivity(){
                     Activity.RESULT_OK->{
                         val uri=data?.data
                         CropImage.activity(uri)
-                                .start(this);
+                                .start(this)
                     }
                 }
             }
             CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE ->{
-                val result = CropImage.getActivityResult(data);
+                val result = CropImage.getActivityResult(data)
                     if (resultCode == RESULT_OK) {
                         val resultUri = result.uri
                         val resizedBitmap = Utility.scaleBitmapDown(MediaStore.Images.Media.getBitmap(getContentResolver(), resultUri),840)
@@ -269,7 +267,7 @@ class ScanActivity : BaseActivity(){
                 DialogHelper.materialCustomViewDialog("Matching Vehicle Found!",view,"Ok","Cancel", MaterialDialog.SingleButtonCallback { dialog, which ->
                     insertToDB()
                     dialog.dismiss()
-                }, MaterialDialog.SingleButtonCallback { dialog, which ->
+                }, MaterialDialog.SingleButtonCallback { dialog, _ ->
                     dialog.dismiss()
                 },this@ScanActivity).show()
 
@@ -319,7 +317,7 @@ class ScanActivity : BaseActivity(){
         }
         scanActivityBinding.txtOperator.setOnClickListener {
             DialogHelper.materialProgressDialog("", this, FilterListAdapter(listName),
-                    MaterialDialog.SingleButtonCallback { dialog, which ->
+                    MaterialDialog.SingleButtonCallback { dialog, _ ->
                         listName= (dialog.recyclerView.adapter as FilterListAdapter).items
                         listName.forEach {
                             if (it.isSelect) {
@@ -335,7 +333,7 @@ class ScanActivity : BaseActivity(){
 
     }
 
-    fun insertToDB(){
+    private fun insertToDB(){
         val locationId = locationModel?.code?.toIntOrNull()?:0
         val floorId =  floorModel?.code?.toIntOrNull()?:0
         val nameId =  nameModel?.code?.toIntOrNull()?:0
@@ -347,7 +345,7 @@ class ScanActivity : BaseActivity(){
         //get screenshot
         googleMap.addMarker(MarkerOptions().position(com.google.android.gms.maps.model.LatLng(googleMap.cameraPosition.target.latitude,
                 googleMap.cameraPosition.target.longitude)).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_map_marker)))
-        scanActivityBinding.btnMarker.visibility=View.GONE
+        scanActivityBinding.imgMarker.visibility=View.GONE
         insertAPI(mainModel)
 //        googleMap.snapshot {
 //            mainModel.image=Utility.convertBitmapToBase64(Utility.scaleBitmapDown(it,860))
@@ -357,7 +355,7 @@ class ScanActivity : BaseActivity(){
     }
 
 
-    fun insertAPI(mainModel: MainModel){
+    private fun insertAPI(mainModel: MainModel){
         progressDialog.show()
         mainViewModel.postStockCheck(mainModel).observe(this, android.arch.lifecycle.Observer { it: Resource<BaseApiResponse>? ->
             it?.let { resource: Resource<BaseApiResponse> ->
@@ -383,27 +381,27 @@ class ScanActivity : BaseActivity(){
     }
 
     fun getType():Int{
-        when(scanEnum){
+        return when(scanEnum){
             SCANENUM.VIN.ordinal ->
-                return 0
+                0
             SCANENUM.REGO.ordinal ->
-                return 1
+                1
             SCANENUM.BARCODE.ordinal ->
-                return 2
-            else -> return 3
+                2
+            else -> 3
 
         }
     }
 
     fun getToolbarTitle():String{
-        when(scanEnum){
+        return when(scanEnum){
             SCANENUM.VIN.ordinal ->
-                return "SCAN VIN"
+                "SCAN VIN"
             SCANENUM.REGO.ordinal ->
-                return "SCAN REGO"
+                "SCAN REGO"
             SCANENUM.BARCODE.ordinal ->
-                return "SCAN BARCODE"
-            else -> return "SCAN QRCODE"
+                "SCAN BARCODE"
+            else -> "SCAN QRCODE"
 
         }
     }
@@ -446,10 +444,10 @@ class ScanActivity : BaseActivity(){
         }
 
         Handler().postDelayed({
-            val layoutHeight=scanActivityBinding.layoutImage.height
-            val imageHeight=scanActivityBinding.btnMarker.height
-            (scanActivityBinding.btnMarker.layoutParams as ConstraintLayout.LayoutParams).setMargins(0,(layoutHeight/2)-(imageHeight),0,0)
-            scanActivityBinding.btnMarker.requestLayout()
+            val layoutHeight=scanActivityBinding.layoutMap.height
+            val imageHeight=scanActivityBinding.imgMarker.height
+            (scanActivityBinding.imgMarker.layoutParams as ConstraintLayout.LayoutParams).setMargins(0,(layoutHeight/2)-(imageHeight),0,0)
+            scanActivityBinding.imgMarker.requestLayout()
         },500)
 
         if(scanEnum==SCANENUM.VIN.ordinal || scanEnum==SCANENUM.REGO.ordinal)
@@ -477,26 +475,19 @@ class ScanActivity : BaseActivity(){
     }
 
 
-    fun scanVinAPI(bitmap: Bitmap){
-        var ocrRequest= OCRRequest()
+    private fun scanVinAPI(bitmap: Bitmap){
+        val ocrRequest= OCRRequest()
         ocrRequest.imageData=Utility.convertBitmapToBase64(bitmap)
         progressDialog.show()
         scanViewModel.getVin(ocrRequest).observe(this, android.arch.lifecycle.Observer { resource: Resource<BaseApiResponse>? ->
+            progressDialog.dismiss()
             if (resource != null) {
                 when (resource.status) {
                     Resource.Status.SUCCESS -> {
-                        progressDialog.dismiss()
                         val ocrModel= resource.data as OCRModel
-                        if(ocrModel!=null){
-                            scanActivityBinding.ediScanResult.setText(ocrModel!!.vin)
-                        }
-                        else{
-                            Toasty.info(this@ScanActivity,"Sorry, No text found, please try again").show()
-                        }
-
+                        scanActivityBinding.ediScanResult.setText(ocrModel!!.vin)
                     }
                     Resource.Status.ERROR -> {
-                        progressDialog.dismiss()
                         Toasty.error(this@ScanActivity,resource.exception?.exceptin?.message?:"").show()
 
                     }
@@ -505,26 +496,19 @@ class ScanActivity : BaseActivity(){
         })
     }
 
-    fun scanRegoAPI(bitmap: Bitmap){
-        var ocrRequest= OCRRequest()
+    private fun scanRegoAPI(bitmap: Bitmap){
+        val ocrRequest= OCRRequest()
         ocrRequest.imageData=Utility.convertBitmapToBase64(bitmap)
         progressDialog.show()
         scanViewModel.getRego(ocrRequest).observe(this, android.arch.lifecycle.Observer { resource: Resource<BaseApiResponse>? ->
+            progressDialog.dismiss()
             if (resource != null) {
                 when (resource.status) {
                     Resource.Status.SUCCESS -> {
-                        progressDialog.dismiss()
                         val ocrModel= resource.data as OCRModel
-                        if(ocrModel!=null){
-                            scanActivityBinding.ediScanResult.setText(ocrModel!!.rego)
-                        }
-                        else{
-                            Toasty.info(this@ScanActivity,"Sorry, No text found, please try again").show()
-                        }
-
+                        scanActivityBinding.ediScanResult.setText(ocrModel!!.rego)
                     }
                     Resource.Status.ERROR -> {
-                        progressDialog.dismiss()
                         Toasty.error(this@ScanActivity,resource.exception?.exceptin?.message?:"").show()
 
                     }
@@ -551,6 +535,11 @@ class ScanActivity : BaseActivity(){
             }
 
         }
+        mainEventBus.frameDimension?.let {
+            scanActivityBinding.layoutImage.layoutParams.height=it[1]
+            scanActivityBinding.layoutImage.requestLayout()
+
+        }
     }
 
 
@@ -569,11 +558,11 @@ class ScanActivity : BaseActivity(){
         locationRequest.interval = 30 * 1000
         locationRequest.fastestInterval = 5 * 1000
         builder.addLocationRequest(locationRequest)
-        builder.setAlwaysShow(true);
+        builder.setAlwaysShow(true)
         val result =
                 LocationServices.SettingsApi.checkLocationSettings(googleApiClient, builder.build());
         result.setResultCallback { result: LocationSettingsResult ->
-            val status = result.getStatus()
+            val status = result.status
             when(status.statusCode) {
                 LocationSettingsStatusCodes.SUCCESS ->
                 {

@@ -230,7 +230,6 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener, Fragmen
         override fun onNmeaMessage(content: String?, p1: Long) {
             doAsync {
                 if (content!!.toUpperCase().contains("GPGSV")) {
-                    Logger.d(content)
                     val arr: List<String> = content.split(",")
                     when {
                         arr.size == 8 -> {

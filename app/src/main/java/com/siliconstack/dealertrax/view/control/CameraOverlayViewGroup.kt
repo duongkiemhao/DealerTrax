@@ -19,7 +19,7 @@ class CameraOverlayViewGroup : FrameLayout {
     var myHeight= 150F
 
     private val mTutorialColor = Color.parseColor("#99000000")
-    var cameraOverlayViewGroupListener:CameraOverlayViewGroupListener?=null
+    var cameraOverlayViewGroupListener: CameraOverlayViewGroupListener?=null
 
     constructor(context: Context) : super(context) {
         init()

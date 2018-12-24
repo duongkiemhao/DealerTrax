@@ -105,6 +105,7 @@ class Utility{
             // Create an image file name
             var timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date());
             var imageFileName = "JPEG_" + timeStamp + "_";
+            //var storageDir = File("/sdcard/stockCheckImage/")
             var storageDir = context.cacheDir
             var image = File.createTempFile(
                     imageFileName,  /* prefix */

@@ -105,7 +105,7 @@
                         android:layout_alignParentEnd="true"
                         app:menu_labels_hideAnimation="@anim/fab_slide_out_to_right"
                         app:menu_labels_position="left"
-                         app:menu_fab_size="normal"
+                        app:menu_fab_size="normal"
                         app:menu_labels_showAnimation="@anim/fab_slide_in_from_right"
                         app:menu_colorNormal="@color/black"
                         app:menu_colorPressed="@color/black"
@@ -116,7 +116,7 @@
                             android:id="@+id/btn_scan_vin"
                             android:layout_width="60dp"
                             android:layout_height="60dp"
-                            android:src="@mipmap/ic_car_vin"
+                            android:src="@drawable/ic_vin"
                             app:fab_colorNormal="@color/white"
                             app:fab_colorPressed="#e4cccc"
                             app:fab_label="VIN"
@@ -128,7 +128,7 @@
                             android:layout_height="60dp"
                             app:fab_colorNormal="@color/white"
                             app:fab_colorPressed="#e4cccc"
-                            android:src="@mipmap/ic_rego"
+                            android:src="@drawable/ic_rego"
                             app:fab_label="Rego"
 
                             app:fab_size="normal" />
@@ -139,7 +139,7 @@
                             android:layout_height="60dp"
                             app:fab_colorNormal="@color/white"
                             app:fab_colorPressed="#e4cccc"
-                            android:src="@mipmap/ic_barcode"
+                            android:src="@drawable/ic_barcode"
                             app:fab_label="Barcode"
                             app:fab_size="normal" />
                         <com.github.clans.fab.FloatingActionButton
@@ -148,7 +148,7 @@
                             android:layout_height="60dp"
                             app:fab_colorNormal="@color/white"
                             app:fab_colorPressed="#e4cccc"
-                            android:src="@mipmap/ic_qrcode"
+                            android:src="@drawable/ic_qr_code"
                             app:fab_label="QRCode"
                             app:fab_size="normal" />
                         <com.github.clans.fab.FloatingActionButton

@@ -5,7 +5,7 @@
 
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="match_parent" android:id="@+id/layout_root"
         android:layout_height="match_parent"
         android:background="#533889"
 
@@ -60,7 +60,7 @@
 
 
         <android.support.constraint.ConstraintLayout
-            android:id="@+id/layout_image"
+            android:id="@+id/layout_map"
             android:layout_width="match_parent"
             android:layout_height="0dp" android:layout_weight="1">
 
@@ -71,7 +71,7 @@
                 android:layout_height="match_parent" app:layout_constraintVertical_weight="1"/>
 
             <ImageView
-                android:id="@+id/btn_marker"
+                android:id="@+id/img_marker"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:src="@mipmap/ic_map_marker"
@@ -95,7 +95,7 @@
                 <android.support.constraint.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="180dp"
-                    android:background="#B2BCC6"
+                    android:background="#B2BCC6" android:id="@+id/layout_image"
                     android:gravity="center">
 
                     <ImageView
