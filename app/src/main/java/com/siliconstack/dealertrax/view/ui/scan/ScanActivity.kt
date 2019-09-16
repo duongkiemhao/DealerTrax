@@ -4,12 +4,11 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.arch.lifecycle.ViewModelProviders
-import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.databinding.DataBindingUtil
 import android.graphics.Bitmap
-import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.provider.MediaStore
@@ -25,11 +24,8 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.android.gms.maps.model.LatLng
-import com.google.api.client.extensions.android.json.AndroidJsonFactory
-import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.services.vision.v1.Vision
-import com.google.api.services.vision.v1.VisionRequestInitializer
-import com.google.api.services.vision.v1.model.*
+import com.google.gson.Gson
+import com.google.gson.JsonElement
 import com.siliconstack.dealertrax.AppApplication
 import com.siliconstack.dealertrax.PreferenceSetting
 import com.siliconstack.dealertrax.R
@@ -46,8 +42,10 @@ import com.siliconstack.dealertrax.view.utility.DateUtility
 import com.siliconstack.dealertrax.view.utility.Utility
 import com.siliconstack.dealertrax.viewmodel.MainViewModel
 import com.siliconstack.dealertrax.viewmodel.ScanViewModel
-import com.siliconstack.stockcheck.model.OCRModel
-import com.siliconstack.stockcheck.model.OCRRequest
+import com.siliconstack.dealertrax.model.OCRAuthRequest
+import com.siliconstack.dealertrax.model.OCRAuthenResponse
+import com.siliconstack.dealertrax.model.OCRModel
+import com.siliconstack.dealertrax.model.OCRRequest
 import com.tbruyelle.rxpermissions2.RxPermissions
 import com.theartofdev.edmodo.cropper.CropImage
 import dagger.android.AndroidInjection
@@ -55,16 +53,16 @@ import es.dmoral.toasty.Toasty
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
-import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.startActivity
-import org.jetbrains.anko.uiThread
 import java.util.*
-import java.util.regex.Pattern
 import kotlin.collections.ArrayList
 
 
 class ScanActivity : BaseActivity(){
 
+    enum class SCAN_ENUM{
+        VIN, REGO
+    }
     lateinit var scanActivityBinding: ScanActivityBinding
     lateinit var scanViewModel: ScanViewModel
     val REQUEST_QRCODE=101
@@ -205,10 +203,10 @@ class ScanActivity : BaseActivity(){
                         scanActivityBinding.imageView.setImageBitmap(resizedBitmap)
                         when(scanEnum){
                             SCANENUM.VIN.ordinal ->{
-                                scanVinAPI(resizedBitmap)
+                                authOCRService(resizedBitmap,SCAN_ENUM.VIN)
                             }
                             SCANENUM.REGO.ordinal ->{
-                                scanRegoAPI(resizedBitmap)
+                                authOCRService(resizedBitmap,SCAN_ENUM.REGO)
                             }
                             else ->{}
                         }
@@ -475,17 +473,64 @@ class ScanActivity : BaseActivity(){
     }
 
 
-    private fun scanVinAPI(bitmap: Bitmap){
-        val ocrRequest= OCRRequest()
-        ocrRequest.imageData=Utility.convertBitmapToBase64(bitmap)
+
+    private fun authOCRService(bitmap: Bitmap,scanEnum: SCAN_ENUM) {
+        val ocrAuthRequest = OCRAuthRequest(Config.OCR_SYSTEM_CODE, "Android OS:"+ Build.VERSION.RELEASE+" v"+Utility.getAppVersionName(), Utility.randomString(), Config.OCR_API_KEY)
         progressDialog.show()
-        scanViewModel.getVin(ocrRequest).observe(this, android.arch.lifecycle.Observer { resource: Resource<BaseApiResponse>? ->
+        scanViewModel.authenOCRService(ocrAuthRequest).observe(this, android.arch.lifecycle.Observer { resource: Resource<BaseApiResponse>? ->
             progressDialog.dismiss()
             if (resource != null) {
                 when (resource.status) {
                     Resource.Status.SUCCESS -> {
-                        val ocrModel= resource.data as OCRModel
-                        scanActivityBinding.ediScanResult.setText(ocrModel!!.vin)
+                        val response = resource.data as OCRAuthenResponse
+                        if (response.code != 0)
+                            DialogHelper.materialDialog("Authentication with OCR service failed (${response.message}). Please try again", "Close", MaterialDialog.SingleButtonCallback { dialog, which ->
+                                dialog.dismiss()
+                            }, this@ScanActivity).show()
+                        else {
+                            if (!(response.data).asString.isNullOrBlank()) {
+                                when(scanEnum){
+                                    SCAN_ENUM.REGO -> scanRegoAPI(bitmap,(response.data).asString!! )
+                                    SCAN_ENUM.VIN -> scanVinAPI( bitmap,(response.data).asString!!)
+
+                                }
+
+                            }
+                        }
+                    }
+                    else -> {
+                        if (!resource.exception?.exceptin?.message.isNullOrBlank())
+                            DialogHelper.materialDialog("Authentication with OCR service failed. Please try again", "Close", MaterialDialog.SingleButtonCallback { dialog, which ->
+                                dialog.dismiss()
+                            }, this@ScanActivity).show()
+                    }
+                }
+            } else {
+                DialogHelper.materialDialog("Authentication with OCR service failed. Please try again", "Close", MaterialDialog.SingleButtonCallback { dialog, which ->
+                    dialog.dismiss()
+                }, this@ScanActivity).show()
+
+            }
+        })
+    }
+
+    private fun scanVinAPI(bitmap: Bitmap,token:String){
+        val ocrRequest= OCRRequest(Config.OCR_COUNTRY_CODE, Utility.convertBitmapToBase64(bitmap))
+
+        progressDialog.show()
+        scanViewModel.getVin(ocrRequest,token).observe(this, android.arch.lifecycle.Observer { resource: Resource<BaseApiResponse>? ->
+            progressDialog.dismiss()
+            if (resource != null) {
+                when (resource.status) {
+                    Resource.Status.SUCCESS -> {
+                        val baseResponse = resource.data as JsonElement
+                        val response = Gson().fromJson(baseResponse, OCRAuthenResponse::class.java) as OCRAuthenResponse
+                        if (response.code == 0) {
+                            val ocrModel = Gson().fromJson(response.data.asJsonObject, OCRModel::class.java)
+                            scanActivityBinding.ediScanResult.setText(ocrModel!!.vin)
+                        } else {
+                            Toasty.info(this@ScanActivity, "Sorry, No text found, please try again").show()
+                        }
                     }
                     Resource.Status.ERROR -> {
                         Toasty.error(this@ScanActivity,resource.exception?.exceptin?.message?:"").show()
@@ -496,17 +541,22 @@ class ScanActivity : BaseActivity(){
         })
     }
 
-    private fun scanRegoAPI(bitmap: Bitmap){
-        val ocrRequest= OCRRequest()
-        ocrRequest.imageData=Utility.convertBitmapToBase64(bitmap)
+    private fun scanRegoAPI(bitmap: Bitmap,token:String){
+        var ocrRequest= OCRRequest(Config.OCR_COUNTRY_CODE, Utility.convertBitmapToBase64(bitmap))
         progressDialog.show()
-        scanViewModel.getRego(ocrRequest).observe(this, android.arch.lifecycle.Observer { resource: Resource<BaseApiResponse>? ->
+        scanViewModel.getRego(ocrRequest,token).observe(this, android.arch.lifecycle.Observer { resource: Resource<BaseApiResponse>? ->
             progressDialog.dismiss()
             if (resource != null) {
                 when (resource.status) {
                     Resource.Status.SUCCESS -> {
-                        val ocrModel= resource.data as OCRModel
-                        scanActivityBinding.ediScanResult.setText(ocrModel!!.rego)
+                        val baseResponse = resource.data as JsonElement
+                        val response = Gson().fromJson(baseResponse, OCRAuthenResponse::class.java) as OCRAuthenResponse
+                        if (response.code == 0) {
+                            val ocrModel = Gson().fromJson(response.data.asJsonObject, OCRModel::class.java)
+                            scanActivityBinding.ediScanResult.setText(ocrModel!!.rego)
+                        } else {
+                            Toasty.info(this@ScanActivity, "Sorry, No text found, please try again").show()
+                        }
                     }
                     Resource.Status.ERROR -> {
                         Toasty.error(this@ScanActivity,resource.exception?.exceptin?.message?:"").show()
@@ -526,10 +576,10 @@ class ScanActivity : BaseActivity(){
             scanActivityBinding.imageView.setImageBitmap(bitmap)
             when(scanEnum){
                 SCANENUM.VIN.ordinal ->{
-                    scanVinAPI(bitmap)
+                    authOCRService(bitmap,SCAN_ENUM.VIN)
                 }
                 SCANENUM.REGO.ordinal ->{
-                    scanRegoAPI(bitmap)
+                    authOCRService(bitmap,SCAN_ENUM.REGO)
                 }
                 else ->{}
             }

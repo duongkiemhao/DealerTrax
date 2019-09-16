@@ -299,5 +299,12 @@ class Utility{
             return Bitmap.createScaledBitmap(bitmap, resizedWidth, resizedHeight, false)
         }
 
+        fun randomString():String{
+            val source = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            return   (1..source.length)
+                    .map { source.random() }
+                    .joinToString("")
+        }
+
     }
 }

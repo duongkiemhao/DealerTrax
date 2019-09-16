@@ -9,7 +9,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
-import android.support.v4.app.Fragment
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
@@ -45,7 +44,7 @@ import java.util.*
 import javax.inject.Inject
 
 
-class ListViewFragment : Fragment(), Injectable ,ListViewFragmentListener,FragmentListener{
+class ListViewFragment : android.support.v4.app.Fragment(), Injectable ,ListViewFragmentListener,FragmentListener{
 
 
     @Inject
@@ -77,7 +76,7 @@ class ListViewFragment : Fragment(), Injectable ,ListViewFragmentListener,Fragme
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        listviewFragmentBinding = DataBindingUtil.inflate(inflater, R.layout.listview_fragment, null, false);
+        listviewFragmentBinding = DataBindingUtil.inflate(inflater, R.layout.listview_fragment, null, false)
         mainViewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel::class.java)
         AppApplication.appComponent.injectViewModel(mainViewModel)
         return listviewFragmentBinding.root
@@ -159,11 +158,11 @@ class ListViewFragment : Fragment(), Injectable ,ListViewFragmentListener,Fragme
     }
 
     var mScrollListener: RecyclerView.OnScrollListener = object : RecyclerView.OnScrollListener() {
-        override fun onScrolled(recyclerView: RecyclerView?, dx: Int, dy: Int) {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
             if (isLoading)
                 return
-            val visibleItemCount = listviewFragmentBinding.recyclerView.layoutManager.getChildCount()
-            val totalItemCount = listviewFragmentBinding.recyclerView.layoutManager.getItemCount()
+            val visibleItemCount = listviewFragmentBinding.recyclerView.layoutManager?.childCount?:0
+            val totalItemCount = listviewFragmentBinding.recyclerView.layoutManager?.itemCount?:0
             val pastVisibleItems = (listviewFragmentBinding.recyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
 
 
@@ -362,10 +361,10 @@ class ListViewFragment : Fragment(), Injectable ,ListViewFragmentListener,Fragme
     fun openFile(file: File) {
         val intent = Intent()
         intent.action = android.content.Intent.ACTION_VIEW
-        val data = Uri.fromFile(file);
-        val type = "*/*";
-        intent.setDataAndType(data, type);
-        startActivity(intent);
+        val data = Uri.fromFile(file)
+        val type = "*/*"
+        intent.setDataAndType(data, type)
+        startActivity(intent)
     }
 
 

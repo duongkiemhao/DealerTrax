@@ -6,6 +6,7 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.databinding.DataBindingUtil
+import android.gesture.Gesture
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
@@ -17,13 +18,10 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver
-import com.otaliastudios.cameraview.CameraListener
-import com.otaliastudios.cameraview.Gesture
-import com.otaliastudios.cameraview.GestureAction
 import org.greenrobot.eventbus.EventBus
 import android.view.Surface
 import android.widget.RelativeLayout
-import com.otaliastudios.cameraview.CameraUtils
+import com.camerakit.CameraKitView
 import com.siliconstack.dealertrax.R
 import com.siliconstack.dealertrax.databinding.CameraActivityBinding
 import com.siliconstack.dealertrax.view.control.CameraOverlayViewGroup
@@ -52,10 +50,8 @@ class CameraActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility")
     fun setListener(){
         cameraActivityBinding.btnTake.setOnClickListener {
-            cameraActivityBinding.camera.capturePicture()
-        }
-        cameraActivityBinding.camera.addCameraListener(object :CameraListener(){
-            override fun onPictureTaken(data: ByteArray?) {
+
+        cameraActivityBinding.camera.captureImage { _, bytes ->
 
                 val width: Int = cameraActivityBinding.camera.width
                 val height: Int = cameraActivityBinding.camera.height
@@ -64,19 +60,8 @@ class CameraActivity : AppCompatActivity() {
                 options.inMutable = true
                 options.inScaled = false
                 options.inSampleSize = 2
-                var bitmap = BitmapFactory.decodeByteArray(data, 0, data!!.size, options)
+                var bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes!!.size, options)
                 val matrix = Matrix()
-                val rotation = this@CameraActivity.getWindowManager().getDefaultDisplay().getRotation()
-                var degrees = 0f
-                when (rotation) {
-                    Surface.ROTATION_0 -> degrees = 90f
-                    Surface.ROTATION_90 -> degrees = 0f
-                    Surface.ROTATION_180 -> degrees = 270f
-                    Surface.ROTATION_270 -> degrees = 180f
-                }
-                matrix.postRotate(degrees)
-
-
                 bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, false)
                 val bh = bitmap!!.height
                 val bw = bitmap.width
@@ -93,17 +78,16 @@ class CameraActivity : AppCompatActivity() {
                     resizedBitmap.recycle()
                     finish()
                 }
-            }
-        });
+
+        }
+        }
         cameraActivityBinding.overlayView.cameraOverlayViewGroupListener=object: CameraOverlayViewGroup.CameraOverlayViewGroupListener{
             override fun onTouch(motionEvent: MotionEvent) {
                 cameraActivityBinding.camera.onTouchEvent(motionEvent)
             }
 
         }
-        //camera
-        cameraActivityBinding.camera.mapGesture(Gesture.PINCH, GestureAction.ZOOM); // Pinch to zoom!
-        cameraActivityBinding.camera.mapGesture(Gesture.TAP, GestureAction.FOCUS_WITH_MARKER); // Tap to focus!
+
 
     }
 
@@ -160,21 +144,33 @@ class CameraActivity : AppCompatActivity() {
         finish()
     }
 
+
+    @SuppressLint("MissingPermission")
     override fun onResume() {
         super.onResume()
-        cameraActivityBinding.camera.start()
+        cameraActivityBinding.camera.onResume()
     }
 
     override fun onPause() {
         super.onPause()
-        cameraActivityBinding.camera.stop()
+        cameraActivityBinding.camera.onPause()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        cameraActivityBinding.camera.onStart()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        cameraActivityBinding.camera.onStop()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         animatorSet.removeAllListeners()
         animatorSet.cancel()
-        cameraActivityBinding.camera.destroy()
+        cameraActivityBinding.camera.onStop()
     }
 }
 

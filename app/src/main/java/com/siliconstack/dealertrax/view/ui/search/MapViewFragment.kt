@@ -7,17 +7,19 @@ import android.arch.lifecycle.ViewModelProvider
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Context
 import android.content.Intent
-import android.content.IntentSender
 import android.databinding.DataBindingUtil
 import android.location.LocationManager
 import android.location.OnNmeaMessageListener
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.afollestad.materialdialogs.MaterialDialog
-import com.google.android.gms.common.api.GoogleApiClient
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -37,6 +39,7 @@ import com.siliconstack.dealertrax.viewmodel.MainViewModel
 import com.tbruyelle.rxpermissions2.RxPermissions
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
+import java.util.*
 import javax.inject.Inject
 
 
@@ -51,35 +54,26 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener, Fragmen
 
     //google map
     lateinit var googleMap: GoogleMap
-    val REQUEST_CHECK_SETTINGS = 0x1
-    val REQUEST_MY_LOCATION = 0x2
+    private val REQUEST_MY_LOCATION = 0x2
     var lat: Double = 0.0
     var lng: Double = 0.0
     var listMapType = arrayListOf(FilterDialogModel("Satellite", "0", Config.MAP_DEFAULT_TYPE == GoogleMap.MAP_TYPE_SATELLITE),
             FilterDialogModel("Terrain", "1", Config.MAP_DEFAULT_TYPE == GoogleMap.MAP_TYPE_TERRAIN))
-    val fusedLocationProviderClient by lazy {
-        LocationServices.getFusedLocationProviderClient(context!!);
+    private val fusedLocationProviderClient by lazy {
+        LocationServices.getFusedLocationProviderClient(context!!)
     }
-    val rxPermissions by lazy {
+    private val rxPermissions by lazy {
         RxPermissions(this)
     }
-    val locationManager by lazy {
+    private val locationManager by lazy {
         context!!.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
     val array by lazy {
         ArrayList<Int>()
     }
-    val googleApiClient by lazy {
-        GoogleApiClient.Builder(context!!)
-                .addApi(LocationServices.API)
-                .build()
-    }
-    val locationRequest by lazy {
-        LocationRequest.create();
+    private val locationRequest by lazy {
+        LocationRequest.create()
 
-    }
-    val builder by lazy {
-        LocationSettingsRequest.Builder()
     }
 
 
@@ -129,9 +123,10 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener, Fragmen
                                 googleMap.isMyLocationEnabled = true
                                 googleMap.uiSettings.isMyLocationButtonEnabled = true
                                 googleMap.setOnMyLocationButtonClickListener {
-                                    settingsRequest(REQUEST_MY_LOCATION)
+                                    getCurrentLocation()
                                     false
                                 }
+                                checkLocationSettings()
 
                                 focusAllMarkers()
 
@@ -139,15 +134,17 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener, Fragmen
                         }
 
 
+
             }
         }
     }
 
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission", "ResourceType")
     fun focusAllMarkers() {
         if (mainViewModel.items.count() == 0) {
-            (childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).view?.findViewById<View>(0x2)?.performClick()
+            //(childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).view?.findViewById<View>(0x2)?.performClick()
+            getCurrentLocation()
         } else {
             val builder = LatLngBounds.Builder()
             googleMap.clear()
@@ -198,18 +195,28 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener, Fragmen
 
 
     @SuppressLint("MissingPermission")
-    fun getDeviceLocation() {
+    fun getCurrentLocation() {
+        fusedLocationProviderClient.requestLocationUpdates(locationRequest, object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+                //Logger.d("---getCurrentLocation---onLocationResult---")
+                locationResult?.let {
+                    val location = it.locations[0]
+                    location?.let {
+                        val update = CameraUpdateFactory.newLatLngZoom(LatLng(it.latitude, it.longitude),
+                                Config.MAP_ZOOM);
+                        googleMap.animateCamera(update)
+                        lat = it.latitude
+                        lng = it.longitude
+                    }
+                }
+            }
+
+        }, Looper.myLooper())
+
         val locationResult = fusedLocationProviderClient.lastLocation
         locationResult.addOnCompleteListener {
             if (it.isSuccessful) {
-                val location = it.result
-                location?.let {
-                    val update = CameraUpdateFactory.newLatLngZoom(LatLng(it.latitude, it.longitude),
-                            Config.MAP_ZOOM);
-                    googleMap.animateCamera(update)
-                    lat = it.latitude
-                    lng = it.longitude
-                }
+
             }
         }
 
@@ -273,75 +280,53 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener, Fragmen
 
     }
 
-    @SuppressLint("MissingPermission")
-    fun settingsRequest(request: Int) {
+    @SuppressLint("MissingPermission", "CheckResult")
+    fun checkLocationSettings() {
 
-        googleApiClient.connect()
         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest.interval = 30 * 1000
-        locationRequest.fastestInterval = 5 * 1000
+        locationRequest.interval = 0
+        locationRequest.fastestInterval = 0
+
+        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
         builder.addLocationRequest(locationRequest)
-        builder.setAlwaysShow(true);
-        val result =
-                LocationServices.SettingsApi.checkLocationSettings(googleApiClient, builder.build());
-        result.setResultCallback { result: LocationSettingsResult ->
-            val status = result.getStatus()
-            val state = result.locationSettingsStates
-            when (status.statusCode) {
-                LocationSettingsStatusCodes.SUCCESS -> {
-                    requestPermissionNMEAListener()
-
-                }
+        val settingsClient = LocationServices.getSettingsClient(context!!)
+        settingsClient.checkLocationSettings(builder.build()).addOnSuccessListener {
+            requestPermissionNMEAListener()
+        }.addOnFailureListener {
+            val statusCode = (it as ApiException).statusCode
+            when (statusCode) {
                 LocationSettingsStatusCodes.RESOLUTION_REQUIRED -> {
-                    try {
-                        status.startResolutionForResult(activity, request)
-                    } catch (e: IntentSender.SendIntentException) {
-
-                    }
+                    val rae = it as ResolvableApiException
+                    rae.startResolutionForResult(activity, REQUEST_MY_LOCATION)
                 }
                 LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE -> {
 
                 }
+
             }
         }
+
+//                    }
+//                }
+
+
     }
 
-    @SuppressLint("MissingPermission", "CheckResult")
+    @SuppressLint("MissingPermission")
     fun requestPermissionNMEAListener() {
-        rxPermissions
-                .request(Manifest.permission.ACCESS_FINE_LOCATION)
-                .subscribe { it: Boolean? ->
-                    if (it!!) {
-                        locationManager.removeNmeaListener(nmeaListener)
-                        locationManager.addNmeaListener(nmeaListener)
-                    }
-                }
+        locationManager.removeNmeaListener(nmeaListener)
+        locationManager.addNmeaListener(nmeaListener)
     }
 
     @SuppressLint("MissingPermission")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
-            REQUEST_CHECK_SETTINGS -> {
-                when (resultCode) {
-                    Activity.RESULT_OK -> {
-                        requestPermissionNMEAListener()
-                    }
-                    Activity.RESULT_CANCELED -> {
 
-                    }
-                }
-            }
             REQUEST_MY_LOCATION -> {
                 when (resultCode) {
                     Activity.RESULT_OK -> {
-                        rxPermissions
-                                .request(Manifest.permission.ACCESS_FINE_LOCATION)
-                                .subscribe { it: Boolean? ->
-                                    if (it!!) {
-                                        getDeviceLocation()
-                                    }
-                                }
+                        requestPermissionNMEAListener()
                     }
                     Activity.RESULT_CANCELED -> {
 
@@ -366,9 +351,9 @@ class MapViewFragment : Fragment(), Injectable, MapViewFragmentListener, Fragmen
     }
 
     @SuppressLint("MissingPermission")
-    override fun onStart() {
-        super.onStart()
-        settingsRequest(REQUEST_CHECK_SETTINGS)
+    override fun onResume() {
+        super.onResume()
+
     }
 
     override fun focusAllMarker() {

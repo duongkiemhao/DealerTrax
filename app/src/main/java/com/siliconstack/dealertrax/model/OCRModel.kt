@@ -1,37 +1,42 @@
-package com.siliconstack.stockcheck.model
+package com.siliconstack.dealertrax.model
+
 
 import android.databinding.BaseObservable
 import android.os.Parcel
 import android.os.Parcelable
+import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
 
 data class OCRModel(
-        @SerializedName("Dob")
-        var dob: String?,
-        @SerializedName("DriverLicenceExpiryDate")
-        var driverLicenceExpiryDate: String?,
-        @SerializedName("DriverLicenceNumber")
-        var driverLicenceNumber: String?,
-        @SerializedName("FirstName")
-        var firstName: String?,
-        @SerializedName("LastName")
-        var lastName: String?,
-        @SerializedName("ParsedContent")
+        @SerializedName("dob")
+        var dob: String?="",
+        @SerializedName("driverLicenceExpiryDate")
+        var driverLicenceExpiryDate: String?="",
+        @SerializedName("driverLicenceNumber")
+        var driverLicenceNumber: String?="",
+        @SerializedName("firstName")
+        var firstName: String?="",
+        @SerializedName("lastName")
+        var lastName: String?="",
+        @SerializedName("parsedContent")
         var parsedContent: String?,
-        @SerializedName("PostCode")
-        var postCode: String?,
-        @SerializedName("State")
-        var state: String?,
-        @SerializedName("StreetLine1")
-        var streetLine1: String?,
-        @SerializedName("Suburb")
-        var suburb: String?,
-        @SerializedName("Vin")
-                var vin: String?,
-                @SerializedName("Rego")
-                var rego: String?
-):BaseObservable(), Parcelable {
+        @SerializedName("postCode")
+        var postCode: String?="",
+        @SerializedName("state")
+        var state: String?="",
+        @SerializedName("streetLine1")
+        var streetLine1: String?="",
+        @SerializedName("suburb")
+        var suburb: String?="",
+        @SerializedName("vin")
+        var vin: String?,
+        @SerializedName("rego")
+        var rego: String?,
+        @SerializedName("version")
+        var version: String?
+) : BaseObservable(), Parcelable {
         constructor(parcel: Parcel) : this(
+                parcel.readString(),
                 parcel.readString(),
                 parcel.readString(),
                 parcel.readString(),
@@ -59,6 +64,7 @@ data class OCRModel(
                 parcel.writeString(suburb)
                 parcel.writeString(vin)
                 parcel.writeString(rego)
+                parcel.writeString(version)
         }
 
         override fun describeContents(): Int {
@@ -74,5 +80,8 @@ data class OCRModel(
                         return arrayOfNulls(size)
                 }
         }
-
 }
+
+data class OCRRequest(val countryCode: String, var imageData:String)
+data class OCRAuthRequest(val systemCode: String, val customer:String, val reference:String, val apiKey:String)
+data class OCRAuthenResponse(val data: JsonElement, val code:Int, val message:String)

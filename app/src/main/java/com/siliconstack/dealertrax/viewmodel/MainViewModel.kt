@@ -31,11 +31,10 @@ class MainViewModel @Inject constructor (application: AppApplication): AndroidVi
 
     init {
 
-
     }
 
     fun initItems(){
-        items = mainDAO.query(SimpleSQLiteQuery("select a.*, b.name as locationName,c.name as floorName,d.name as operatorName ,0 as isSelected   from MainModel a left join LocationModel b on a.locationID=b.id left join FloorModel c on a.floorID=c.id left join OperatorModel d on a.locationID=d.id  order by a.timestamp desc limit "+Config.LIMIT+" offset 0")) as ArrayList<MainDTO>
+        //items = mainDAO.query(SimpleSQLiteQuery("select a.*, b.name as locationName,c.name as floorName,d.name as operatorName ,0 as isSelected   from MainModel a left join LocationModel b on a.locationID=b.id left join FloorModel c on a.floorID=c.id left join OperatorModel d on a.locationID=d.id  order by a.timestamp desc limit "+Config.LIMIT+" offset 0")) as ArrayList<MainDTO>
     }
 
     fun addMainModel(mainModel: MainModel){

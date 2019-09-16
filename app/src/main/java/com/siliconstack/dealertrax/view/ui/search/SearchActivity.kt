@@ -229,7 +229,6 @@ class SearchActivity : BaseActivity(), HasSupportFragmentInjector, SearchActivit
             setDisplayHomeAsUpEnabled(false)
         }
 
-
     }
 
 

@@ -93,6 +93,8 @@ class MainActivity : BaseActivity() {
         setListener()
         init()
 
+
+
     }
 
     private fun initViewBinding() {
@@ -104,32 +106,32 @@ class MainActivity : BaseActivity() {
 
     @SuppressLint("MissingPermission")
     private fun init() {
-        setSupportActionBar(mainActivityBinding.toolbar)
-        supportActionBar!!.setDisplayShowTitleEnabled(false)
-        mainActivityBinding.txtAppVersion.text = "Dealer Trax v" + Utility.getAppVersionName()
-        (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).getMapAsync {
-            it?.let {
-                googleMap = it
-                googleMap.mapType = MAP_DEFAULT_TYPE
-                googleMap.uiSettings.isZoomControlsEnabled = true
-                rxPermissions
-                        .request(Manifest.permission.ACCESS_FINE_LOCATION)
-                        .subscribe { it: Boolean? ->
-                            if (it!!) {
-
-                                googleMap.isMyLocationEnabled = true
-                                googleMap.uiSettings.isMyLocationButtonEnabled = true
-                                googleMap.setOnMyLocationButtonClickListener {
-                                    settingsRequest(REQUEST_MY_LOCATION)
-                                    false
-                                }
-                                getDeviceLocation()
-                            }
-                        }
-
-
-            }
-        }
+//        setSupportActionBar(mainActivityBinding.toolbar)
+//        supportActionBar!!.setDisplayShowTitleEnabled(false)
+//        mainActivityBinding.txtAppVersion.text = "Dealer Trax v" + Utility.getAppVersionName()
+//        (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).getMapAsync {
+//            it?.let {
+//                googleMap = it
+//                googleMap.mapType = MAP_DEFAULT_TYPE
+//                googleMap.uiSettings.isZoomControlsEnabled = true
+//                rxPermissions
+//                        .request(Manifest.permission.ACCESS_FINE_LOCATION)
+//                        .subscribe { it: Boolean? ->
+//                            if (it!!) {
+//
+//                                googleMap.isMyLocationEnabled = true
+//                                googleMap.uiSettings.isMyLocationButtonEnabled = true
+//                                googleMap.setOnMyLocationButtonClickListener {
+//                                    settingsRequest(REQUEST_MY_LOCATION)
+//                                    false
+//                                }
+//                                getDeviceLocation()
+//                            }
+//                        }
+//
+//
+//            }
+//        }
 
 
     }
@@ -357,46 +359,46 @@ class MainActivity : BaseActivity() {
                     }
                 }
     }
-    
-    @SuppressLint("MissingPermission")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        when(requestCode){
-            REQUEST_CHECK_SETTINGS ->{
-                when(resultCode){
-                    Activity.RESULT_OK ->{
-                      requestPermissionNMEAListener()
-                    }
-                    Activity.RESULT_CANCELED->{
-
-                    }
-                }
-            }
-            REQUEST_MY_LOCATION->{
-                when(resultCode){
-                    Activity.RESULT_OK ->{
-                        rxPermissions
-                                .request( Manifest.permission.ACCESS_FINE_LOCATION)
-                                .subscribe { it: Boolean? ->
-                                    if (it!!) {
-                                        getDeviceLocation()
-                                    }
-                                }
-                    }
-                    Activity.RESULT_CANCELED->{
-
-                    }
-                }
-            }
-            REQUEST_TAKE_PICTURE ->{
-                startActivity<ScanActivity>("scanEnum" to ScanActivity.SCANENUM.VIN.ordinal,
-                        "mapType" to googleMap.mapType,"lat" to googleMap.cameraPosition.target.latitude,"lng" to googleMap.cameraPosition.target.longitude)
-            }
-            REQUEST_OPEN_GALLERY ->{
-
-            }
-        }
-    }
+//
+//    @SuppressLint("MissingPermission")
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//        super.onActivityResult(requestCode, resultCode, data)
+//        when(requestCode){
+//            REQUEST_CHECK_SETTINGS ->{
+//                when(resultCode){
+//                    Activity.RESULT_OK ->{
+//                      requestPermissionNMEAListener()
+//                    }
+//                    Activity.RESULT_CANCELED->{
+//
+//                    }
+//                }
+//            }
+//            REQUEST_MY_LOCATION->{
+//                when(resultCode){
+//                    Activity.RESULT_OK ->{
+//                        rxPermissions
+//                                .request( Manifest.permission.ACCESS_FINE_LOCATION)
+//                                .subscribe { it: Boolean? ->
+//                                    if (it!!) {
+//                                        getDeviceLocation()
+//                                    }
+//                                }
+//                    }
+//                    Activity.RESULT_CANCELED->{
+//
+//                    }
+//                }
+//            }
+//            REQUEST_TAKE_PICTURE ->{
+//                startActivity<ScanActivity>("scanEnum" to ScanActivity.SCANENUM.VIN.ordinal,
+//                        "mapType" to googleMap.mapType,"lat" to googleMap.cameraPosition.target.latitude,"lng" to googleMap.cameraPosition.target.longitude)
+//            }
+//            REQUEST_OPEN_GALLERY ->{
+//
+//            }
+//        }
+//    }
 
 
 

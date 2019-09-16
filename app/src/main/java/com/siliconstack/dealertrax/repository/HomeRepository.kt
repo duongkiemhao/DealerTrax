@@ -3,18 +3,15 @@ package com.siliconstack.dealertrax.repository
 
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
-import com.siliconstack.dealertrax.AppApplication
+import com.google.gson.JsonElement
 import com.siliconstack.dealertrax.api.OCRApi
 import com.siliconstack.dealertrax.api.TeleserviceApi
 import com.siliconstack.dealertrax.config.Config
 import com.siliconstack.dealertrax.model.*
-import com.siliconstack.stockcheck.model.OCRModel
-import com.siliconstack.stockcheck.model.OCRRequest
+import com.siliconstack.dealertrax.model.OCRAuthRequest
+import com.siliconstack.dealertrax.model.OCRAuthenResponse
+import com.siliconstack.dealertrax.model.OCRRequest
 import io.reactivex.Observable
-import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
-import retrofit2.converter.gson.GsonConverterFactory
 
 
 class HomeRepository (val teleserviceApi: TeleserviceApi,val OCRApi: OCRApi) : BaseRepository() {
@@ -58,15 +55,21 @@ class HomeRepository (val teleserviceApi: TeleserviceApi,val OCRApi: OCRApi) : B
     }
 
 
-    fun getVin(ocrRequest: OCRRequest): LiveData<Resource<BaseApiResponse>> {
-        var data = MutableLiveData<Resource<OCRModel>>()
-        OCRApi.getVin(ocrRequest).enqueue(object : BaseRepository.Companion.MyRetrofitCallback<OCRModel>(data) {})
+    fun getVin(ocrRequest: OCRRequest, token:String): LiveData<Resource<BaseApiResponse>> {
+        var data = MutableLiveData<Resource<JsonElement>>()
+        OCRApi.getVin("Bearer $token",ocrRequest).enqueue(object : BaseRepository.Companion.MyRetrofitCallback<JsonElement>(data) {})
         return data as MutableLiveData<Resource<BaseApiResponse>>
     }
 
-    fun getRego(ocrRequest: OCRRequest): LiveData<Resource<BaseApiResponse>> {
-        var data = MutableLiveData<Resource<OCRModel>>()
-        OCRApi.getRego(ocrRequest).enqueue(object : BaseRepository.Companion.MyRetrofitCallback<OCRModel>(data) {})
+    fun getRego(ocrRequest: OCRRequest, token:String): LiveData<Resource<BaseApiResponse>> {
+        var data = MutableLiveData<Resource<JsonElement>>()
+        OCRApi.getRego("Bearer $token",ocrRequest).enqueue(object : BaseRepository.Companion.MyRetrofitCallback<JsonElement>(data) {})
+        return data as MutableLiveData<Resource<BaseApiResponse>>
+    }
+
+    fun getOCRAuth(ocrAuthRequest: OCRAuthRequest): LiveData<Resource<BaseApiResponse>> {
+        var data = MutableLiveData<Resource<OCRAuthenResponse>>()
+        OCRApi.authenOCR(ocrAuthRequest).enqueue(object : BaseRepository.Companion.MyRetrofitCallback<OCRAuthenResponse>(data) {})
         return data as MutableLiveData<Resource<BaseApiResponse>>
     }
 

@@ -19,6 +19,10 @@ class Config{
             var MAP_DEFAULT_TYPE= GoogleMap.MAP_TYPE_TERRAIN
 
 
+            val OCR_COUNTRY_CODE="vi-vn"
+            val OCR_SYSTEM_CODE="SSD"
+            val OCR_API_KEY="8315677f30cf43b5981759713b1c1273"
+
 
         }
 
